@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Romans, rubies and the D</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title=" Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v." name="generator" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>Romans, rubies and the D</h1><p>Posted on <time>2012-03-04 19:25</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/ctfe.html"><span class="label label-info small">CTFE</span></a> <a class="tag" href="../tags/d-programming-language.html"><span class="label label-info small">D programming language</span></a> <a class="tag" href="../tags/ruby.html"><span class="label label-info small">Ruby</span></a> <a class="tag" href="../tags/hacks.html"><span class="label label-info small">hacks</span></a></nav></div></div></div></header><p>There's an increasing interest with the <a href='http://dlang.org/index.html'>D programming language</a> amongst my readers so I figured I'll post a bunch of short posts about D and see what happens.</p><p>Anyway, here's a classic example showing <a href='http://www.twc.edu/sites/default/files/u74/dog-dude-wait-what.jpg'>Ruby's</a> capabilities taken from <a href='http://pragprog.com/book/btlang/seven-languages-in-seven-weeks'>Seven Languages in Seven Weeks</a>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="ruby">class Roman
+  def self.method&#95;missing name, &#42;args
+    roman = name.to&#95;s
+    roman.gsub!&#40;&quot;IV&quot;, &quot;IIII&quot;&#41;
+    roman.gsub!&#40;&quot;IX&quot;, &quot;VIIII&quot;&#41;
+    roman.gsub!&#40;&quot;XL&quot;, &quot;XXXX&quot;&#41;
+    roman.gsub!&#40;&quot;XC&quot;, &quot;LXXXX&quot;&#41;
+
+    &#40;roman.count&#40;&quot;I&quot;&#41; +
+     roman.count&#40;&quot;V&quot;&#41; &#42; 5 +
+     roman.count&#40;&quot;X&quot;&#41; &#42; 10 +
+     roman.count&#40;&quot;L&quot;&#41; &#42; 50 +
+     roman.count&#40;&quot;C&quot;&#41; &#42; 100&#41;
+  end
+end
+
+puts Roman.X
+puts Roman.XC
+puts Roman.XII
+</code></pre><p></div></div></p><p><a name="preview-more"></a></p><p>This snippet creates a simple Roman numbers API using Ruby's <code>method&#95;missing</code> - it basically translates method name to its decimal value. For simplicities sake it misses error checking and the like.</p><p>Here's my version in the <strong>D programming language</strong>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">import std.stdio;
+import std.array;
+import std.algorithm;
+
+struct Roman {
+    @property static auto opDispatch&#40;string number&#41;&#40;&#41; {
+        enum num = number.replace&#40;&quot;IV&quot;, &quot;IIII&quot;&#41;
+                         .replace&#40;&quot;IX&quot;, &quot;VIIII&quot;&#41;
+                         .replace&#40;&quot;XL&quot;, &quot;XXXX&quot;&#41;
+                         .replace&#40;&quot;XC&quot;, &quot;LXXXX&quot;&#41;;
+
+        enum value = num.count&#40;'I'&#41;
+                   + num.count&#40;'V'&#41; &#42; 5
+                   + num.count&#40;'X'&#41; &#42; 10
+                   + num.count&#40;'L'&#41; &#42; 50
+                   + num.count&#40;'C'&#41; &#42; 100;
+
+        return value;
+    }
+}
+
+void main&#40;&#41; {
+    writeln&#40;Roman.XV&#41;;
+    writeln&#40;Roman.IIX&#41;;
+    writeln&#40;Roman.VXCII&#41;;
+}
+</code></pre><p></div></div></p><p>Again, for the sake of simplicity it doesn't check for any errors and whatnot. This code works the same way Ruby's version does. Using <code>opDispatch</code> (D's version of <code>method&#95;missing</code>) it first translates the method name into a simpler form and then counts different characters obtaining the decimal value.</p><p>The biggest and most significant difference is the fact, that D's version has <strong>no runtime overhead at all</strong>!</p><p>D's <code>opDispatch</code> is a template, meaning that it's instantiated at compile time making <code>string number</code> a compile time value. Now, making a use of such a compile time value and assigning the result to an enum triggers <a href='http://en.wikipedia.org/wiki/Compile_time_function_execution'>CTFE</a> in D - <strong>the code is run at compile time</strong> leaving no runtime overhead at all!</p><p>(Obviously there might be some overhead in <code>opDispatch!RomanLiteral&#40;&#41;</code> call, but it will most likely be inlined by the compiler.)</p><p>We end up having a simple, readable API using high level features in a <strong>systems programming language</strong> that's <strong>as fast as C</strong>. This is one of the <strong>numerous</strong> reasons I like D so much.</p><p><strong>2016-02-16</strong>: Adjusted some links & tags.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/instant-docs-in-stumpwm.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Instant docs in StumpWM</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="next"><a href="../entries/template-metaranting.html"><span class="entry-title">Template Metaranting</span><i class="fa fa-chevron-right" style="margin-left: 5px;"></i></a></li></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>

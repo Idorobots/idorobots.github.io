@@ -1,0 +1,211 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>(car '(2 3))</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title=" Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v." name="generator" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>(car '(2 3))</h1><p>Posted on <time>2011-05-07 01:10</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/d-programming-language.html"><span class="label label-info small">D programming language</span></a> <a class="tag" href="../tags/lisp.html"><span class="label label-info small">Lisp</span></a> <a class="tag" href="../tags/scheme.html"><span class="label label-info small">Scheme</span></a></nav></div></div></div></header><p>It's been a while since my last post, more than I'd wish for actually, and that is because I was hunting a man by the name Iain Buclaw on the IRC. I had to make sure he was ok with me using some of his work in this next project/post (and he obviously is, oh the kind gentleman he is).</p><p>Last time I shared some thoughts on latmab, a simple algebraic calculator, I have... commited and todays topic is somewhat related. It's a <a href='http://en.wikipedia.org/wiki/Continuation'>continuation</a> I'd say, but let's go on with the story...</p><p><a name="preview-more"></a></p><p>There I was with latmab finished and this awful, awful feeling it was lacking. (Well, it's still lacking, and we're talking serious issues, not like "yeah man, it could use some random-feature", we're talking a <em>fudge-ton</em> of missing features.) Instead of doing the right thing to do and fixing all those issues I went "meh" and started a new project inspired by the man I've mentioned a few lines above.</p><p>It was a Lisp implementation. <em><a href='http://www.youtube.com/watch?v=u43-bh9jrxc#t=3m18s'>evilish music-laughter-thing</a></em> <a href='http://en.wikipedia.org/wiki/Scheme_%28programming_language%29'>Scheme</a> to be exact, and this time it turned out quite well.</p><p>The funny part is I didn't have any previous experience with Scheme (or any other Lisp dialect for that matter), besides some general knowledge about it ("lol, a language made entirely of parens, that's dumb") and a bunch of myths I've heard ("lol, a language made entirely of parens, that's dumb"). With no experience nor proper time for tweaks (I had like five days to implement it before presentation) it was quite a challenge but Scheme turned out to be <a href='http://en.wikipedia.org/wiki/Lispkit_Lisp'>a simple, yet elegant</a> and most of all pleasant to implement language. <del><a href='http://student.agh.edu.pl/~krzepeck/projects/scheme.tar.gz'>You can get it here</a></del> (Page has been lost to the sands of graduation).</p><p>Let's take a look, shall we? Starting with the REPL:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">//Interactive read-eval-write mode:
+auto prompt = &quot;&gt;&quot;;
+
+writeln&#40;welcome, &quot;Type '&#40;?help&#41;' for help.\n&quot;&#41;;
+write&#40;prompt, &quot; &quot;&#41;;
+
+foreach&#40;char&#91;&#93; input; stdin.byLine&#41; {
+    auto m = match&#40;input.idup, regex&#40;&quot;prompt\\s&#42;=\\s&#42;&quot;&#41;&#41;;
+    if&#40;!m.empty &amp;&amp; m.post != &quot;&quot;&#41;    prompt = m.post;
+    else if&#40;input == &quot;quit&quot;&#41;        break;
+    else try {
+        writeln&#40;&quot;\t&quot;, interpreter.doString&#40;input.idup&#41;&#41;;
+    }
+    catch&#40;Exception e&#41; {
+        writeln&#40;&quot;\t&quot;, e&#41;;
+    }
+    write&#40;prompt, &quot; &quot;&#41;;
+}
+writeln&#40;&quot;Wait! You forgot your parentheses!&quot;&#41;;
+</code></pre><p></div></div></p><p>This time it's a little cleaner, I like it way more now. We have: The all usefull and tottaly justified feature - the prompt assignment. Next, the quit command. Could be done just like the other built in REPL commands, but meh, I found it nonelegant to exit violently out of a closure. Lastly, the eval-print part together with exception handling (pretty basic though, cause all it ever throws are syntactic/semantic error messages).</p><p>Speaking of builtins, this is how builtin REPL commands (and all the builtin functions) are added to the interpreter:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">//A bunch of useful builtins:
+void addFunction&#40;string name, string stuff&#41; {
+    interpreter.add&#40;name, delegate Cell&#40;Cell&#91;&#93; args&#41; {
+        writeln&#40;stuff&#41;;
+        return interpreter.NIL;
+    }&#41;;
+}
+
+addFunction&#40;&quot;?help&quot;, help&#41;;
+addFunction&#40;&quot;?usage&quot;, usage&#41;;
+addFunction&#40;&quot;?author&quot;, author&#126;&quot; &#40;&quot;&#126;contact&#126;&quot;&#41;&quot;&#41;;
+addFunction&#40;&quot;?version&quot;, ver&#41;;
+addFunction&#40;&quot;?welcome&quot;, welcome&#41;;
+
+interpreter.add&#40;&quot;?list&quot;, delegate Cell&#40;Cell&#91;&#93; args&#41; {
+    writeln&#40;interpreter.symbols&#41;;
+    return interpreter.NIL;
+}&#41;;
+</code></pre><p></div></div></p><p>Using a local function and closures we add several simple, stuff-printing functions and one listing all available symbols. Looks great and there's not much code repetition thanks to the <code>addFunction</code> function.</p><p>This is how it looks in the <code>Intepreter</code> class:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ arithmeticOp
+ Convinience template for creating new builtins.
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+Cell arithmeticOp&#40;string op&#41;&#40;&#41; {
+    return new Cell&#40;delegate Cell &#40;Cell&#91;&#93; args&#41; {
+        if&#40;!args.length&#41;
+            throw new SemanticException&#40;&quot;#&#91;compiled-procedure &quot;&#126;op&#126;&quot;&#93; needs at least 1 argument.&quot;&#41;;
+
+        real result = to!real&#40;args&#91; 0&#93;.value&#41;;
+        foreach&#40;arg; args&#91;1 .. $&#93;&#41; {
+            mixin&#40;&quot;result &quot;&#126;op&#126;&quot;= to!real&#40;arg.value&#41;;&quot;&#41;;
+        }
+        return new Cell&#40;Cell.ATOM, to!string&#40;result&#41;&#41;;
+    }&#41;;
+}
+
+global.add&#40;&quot;+&quot;, arithmeticOp!&#40;&quot;+&quot;&#41;&#41;;
+global.add&#40;&quot;&#42;&quot;, arithmeticOp!&#40;&quot;&#42;&quot;&#41;&#41;;
+global.add&#40;&quot;/&quot;, arithmeticOp!&#40;&quot;/&quot;&#41;&#41;;
+global.add&#40;&quot;%&quot;, arithmeticOp!&#40;&quot;%&quot;&#41;&#41;;
+global.add&#40;&quot;&#94;&quot;, arithmeticOp!&#40;&quot;&#94;&#94;&quot;&#41;&#41;;
+
+/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ comparisonOp
+ Convinience template for creating new builtins.
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+Cell comparisonOp&#40;string op&#41;&#40;&#41; {
+    return new Cell&#40;delegate Cell &#40;Cell&#91;&#93; args&#41; {
+        if&#40;!args.length&#41;
+            throw new SemanticException&#40;&quot;#&#91;compiled-procedure &quot;&#126;op&#126;&quot;&#93; needs at least 1 argument.&quot;&#41;;
+
+        if&#40;args.length == 1&#41; return TRUE;
+
+        real first = to!real&#40;args&#91; 0&#93;.value&#41;;
+        foreach&#40;arg; args&#91;1 .. $&#93;&#41; {
+            if&#40;!mixin&#40;&quot;first &quot;&#126;op&#126;&quot; to!real&#40;arg.value&#41;&quot;&#41;&#41; return FALSE;
+        }
+        return TRUE;
+    }&#41;;
+}
+
+global.add&#40;&quot;=&quot;, comparisonOp!&#40;&quot;==&quot;&#41;&#41;;
+global.add&#40;&quot;&lt;&quot;, comparisonOp!&#40;&quot;&lt;&quot;&#41;&#41;;
+global.add&#40;&quot;&gt;&quot;, comparisonOp!&#40;&quot;&gt;&quot;&#41;&#41;;
+global.add&#40;&quot;&lt;=&quot;, comparisonOp!&#40;&quot;&lt;=&quot;&#41;&#41;;
+global.add&#40;&quot;&gt;=&quot;, comparisonOp!&#40;&quot;&gt;=&quot;&#41;&#41;;
+</code></pre><p></div></div></p><p>Since most of the arithmetic and comparison operators use the same pattern we create templetes, that make a use of this schema. <em>[sic]</em> Note that some of the operators listed here don't work entirely like they should and some of them aren't even supposed to be in the language. It's also worthy to note that it assumes real as the argument type as it's the only type supported - a major f*ck up on my side, <a href='http://knowyourmeme.com/i/000/052/812/original/Deal_with_it_dog_gif.gif'>deal with it</a>. There are also name bugs in the power and equality operators. The templates use string mixins to mix the operators into the code, and... that's it. Pretty simple.</p><p>The <code>Cell</code> class represents a single lisp form, be it a list, a lambda or a number literal. The general idea for this class was borrowed from Iain Buclaws implementation. I wanted to go for a class hierarchy for the different form kinds (like expressions in matlab implementation), but this could have proven tricky in the evaluation part later on. This is the class:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">class Cell {
+    static const LIST       =   1;
+    static const ATOM       =   2;
+    static const SYMBOL     =   3;
+    static const LAMBDA     =   4;
+    static const BUILTIN    =   5;
+
+    int type = 0;
+
+    string value;
+    Cell&#91;&#93; list;
+
+    Builtin builtin;    //For builtins.
+    Shell shell;        //For lambdas.
+
+    ...
+}
+</code></pre><p></div></div></p><p>The type field determines the type of a cell, it's usually <code>Cell.LIST</code> for starters and mutates to other types when evaluating. This is the reason lisp is easy to implement - everything is a list, doesn't get simplier than that. The value field is the string representing the value of the sexp. It's usually a number literal, since there are no other datatypes implemented, or it's empty. Next, we have a builtin function closure used for builtins and a Shell reference for lambda functions defined during run time by the user. The shell is a reference to the scope in which the lambda was defined - the cell stores it so the local symbols are available for the lambda - it's supposed to be a closure after all.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">class Shell {
+    private Cell&#91;string&#93; symbols;
+    private Shell parent;
+
+    ...
+}
+</code></pre><p></div></div></p><p>The <code>Shell</code> class is fairly simple as well. It represents a scope and stores symbols paired with their definitions. It also stores a reference to the enclosing scope. Shell uses a couple of methods for the symbol access, most notably <code>get&#40;&#41;</code>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">public Cell get&#40;string symbol&#41; {
+    if&#40;symbol in symbols&#41; return symbols&#91;symbol&#93;;
+    else if&#40;parent&#41; return parent.get&#40;symbol&#41;;
+    else throw new UndefinedSymbol&#40;symbol&#41;;
+}
+</code></pre><p></div></div></p><p>If a symbol is absent in the scope of a shell the get call is redirected to the outter shell, or an =UndefinedSymbol= exception is thrown if there is no outter shell. Both of these classes have unittest blocks defined that use an updated version of the utils.testing module I presented a few posts ago. It's bundled up with the source.</p><p>The <code>Interpreter</code> class does both parsing and evaluating the scheme <a href='http://en.wikipedia.org/wiki/S-expression'>sexps</a>. Strategy for parsing is similar both for files and the interactive REPL, it starts by statementizing the input leaving an array of statements, after that each statement is tokenized leaving an array of tokens and lastly the tokens are parsed to a <code>Cell</code> tree. All of those methods are rather boring, so I'll skip them.</p><p>Now that we have a lisp sexp parsed we want to evaluate it:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">private Cell eval&#40;Cell cell, Shell shell, uint depth = 1&#41; {
+    debug&#40;25&#41; writeln&#40;&quot;eval: &quot;, cell&#41;;
+
+    if&#40;depth == MAXDEPTH&#41;
+        throw new SemanticException&#40;&quot;Aborting: maximum recursion depth exceeded &#40;&quot;&#126;to!string&#40;depth&#41;&#126;&quot;&#41;!&quot;&#41;;
+</code></pre><p></div></div></p><p>The <code>eval</code> method uses recursion to evaluate the sexp, and that's why it needs a depth protector. The little <code>debug&#40;25&#41;</code> statement is a great feature of D. The statements it encloses (can be a block statement) are compiled only if there was a <code>-debug</code> (<code>-fdebug</code> for <a href='https://github.com/D-Programming-GDC/GDC'>GDC</a>) passed to the compiler. Furthermore, the switch can be parameterized to pass a level of debugging which we wish to perform. For example, passing <code>-debug=26</code> will compile all debug statements that are of a level 26 and lower. Neat.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">    if&#40;cell.type == Cell.ATOM&#41; return cell;
+    if&#40;cell.type == Cell.SYMBOL&#41; return shell.get&#40;cell.value&#41;;
+    if&#40;!cell.list.length&#41; return NIL;
+</code></pre><p></div></div></p><p>The few simple cases are an <code>ATOM</code>, a <code>SYMBOL</code> and an empty list. The <code>ATOM</code> evaluates to itself, a <code>SYMBOL</code> has to be looked up in the shell first and the empty list is a <code>NIL</code> equivalent. (In many Lisp dialects, for example in Common Lisp <code>nil</code>, <code>'nil</code>, <code>&#40;&#41;</code> and <code>'&#40;&#41;</code> all mean the same, what may seem confusing but is a well thought language feature, I'll write more about it some time.)</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">    if&#40;cell.list&#91; 0&#93;.type == Cell.SYMBOL&#41; {
+        //Keywords:
+        switch&#40;cell.list&#91; 0&#93;.value&#41; {
+            case &quot;begin&quot;:
+                auto len = cell.list.length;
+                foreach&#40;exp; cell.list&#91;1 .. len-1&#93;&#41; eval&#40;exp, shell, depth + 1&#41;;
+                return eval&#40;cell.list&#91;$-1&#93;, shell, depth + 1&#41;;
+            case &quot;define&quot;:
+                auto symbol = cell.list&#91; 1&#93;.value;
+                if&#40;cell.list.length == 3&#41; {
+                    auto exp = eval&#40;cell.list&#91; 2&#93;, shell, depth + 1&#41;;
+                    shell.define&#40;symbol, exp&#41;;
+                }
+                else shell.define&#40;symbol, NIL&#41;;
+                return cell.list&#91; 1&#93;;
+            case &quot;if&quot;:
+                auto then = cell.list&#91; 2&#93;;
+                auto els = &#40;cell.list.length == 4&#41; ? cell.list&#91;3&#93; : NIL;
+                return eval&#40;&#40;eval&#40;cell.list&#91;1&#93;, shell, depth + 1&#41; == TRUE&#41; ? then : els, shell, depth + 1&#41;;
+            case &quot;lambda&quot;:
+                cell.type = Cell.LAMBDA;
+                cell.shell = shell;
+                return cell;
+            case &quot;quote&quot;:
+            case &quot;'&quot;:
+            case &quot;`&quot;:
+                return cell.list&#91; 1&#93;;
+            case &quot;set!&quot;:
+                auto symbol = cell.list&#91; 1&#93;.value;
+                auto exp = eval&#40;cell.list&#91; 2&#93;, shell, depth + 1&#41;;
+                shell.set&#40;symbol, exp&#41;;
+                return cell.list&#91; 1&#93;;
+
+            default: break; //Skip.
+        }
+    }
+</code></pre><p></div></div></p><p>Next case is a list that contains at least one element. If that element is a symbol we need to dispatch it. There are just a few crucial Scheme keywords implemented, it lacks many, many more, and notably it lacks <a href='http://en.wikipedia.org/wiki/Quasi-quotation'>quasiquotation</a>.</p><p>This branch uses a little feature of D that I like - <code>switch</code> statement allows strings in the case labels. It may seem small, it may seem not really usefull, but having so many little features, D takes programming to another level of comfort and elegance. I mean, look how elegant the idea behind this switch is (the code itself might not be, can't really tell), it's not cluttered with nested ifs and whatnot.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">    Cell form = eval&#40;cell.list&#91; 0&#93;, shell, depth + 1&#41;;
+    Cell&#91;&#93; args;
+    foreach&#40;arg; cell.list&#91;1 .. $&#93;&#41;
+        args &#126;= eval&#40;arg, shell, depth + 1&#41;;
+
+    if&#40;form.type == Cell.LAMBDA&#41; {
+        auto inner = new Shell&#40;form.shell&#41;;
+        foreach&#40;i, param; form.list&#91; 1&#93;.list&#41; {
+            inner.define&#40;param.value, args&#91;i&#93;&#41;;
+        }
+        return eval&#40;form.list&#91; 2&#93;, inner, depth + 1&#41;;
+    }
+    else if&#40;form.type == Cell.BUILTIN&#41; return form.builtin&#40;args&#41;;
+
+    throw new SemanticException&#40;&quot;The expression &quot;&#126;cell.toString&#126;&quot; is not applicable.&quot;&#41;;
+}
+</code></pre><p></div></div></p><p>The rest of the function deals with lambdas and builtins. Lambdas need to be evaluated in their local scope with their enclosing scope kept in mind. Builtins are simply evaluated using their stored D closures.</p><p>The interpreter too uses unittests, in fact it makes quite a few assertions, but sadly I didn't have enough time to make it pass 100% of them. (Fookin 3.8% left...) The unittests were written by <em>Iain Buclaw</em> for his implementation, and I just borrowed them for mine, so all the credit goes to him. Thanks once again.</p><p>Test-run time:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">Scheme interpreter v29.03.11 - a simple scheme interpreter.
+Copyright &#40;C&#41; 2011 Kajetan Rzepecki nope.nope@nope.nope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+&#40;at your option&#41; any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see http://www.gnu.org/licenses.
+Check README.txt and LICENSE.txt for more info.
+
+Type '&#40;?help&#41;' for help.
+
+&gt; &#40;define &#42;PI&#42; 3.14159265&#41;
+    &#42;PI&#42;
+&gt; &#40;define &#42;E&#42; 2.71828183&#41;
+    &#42;E&#42;
+&gt; &#42;PI&#42;
+    3.14159265
+&gt; &#40;&#94; 2 &#40;+ 2 &#40;erf &#42;E&#42;&#41;&#41;&#41;
+    Undefined symbol: erf in &#40;&#94; 2 &#40;+ 2 &#40;erf &#42;E&#42;&#41;&#41;&#41;
+&gt; &#40;define erf &#40;lambda &#40;x&#41; &#40;sqrt &#40;- 1 &#40;exp &#40;&#42; &#40;- &#40;&#42; x x&#41;&#41; &#40;/ &#40;+ 1.27323981 &#40;&#42; 0.140012 x x&#41;&#41; &#40;+ 1 &#40;&#42; 0.140012 x x&#41;&#41;&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+    erf
+&gt; &#40;&#94; 2 &#40;+ 2 &#40;erf &#42;E&#42;&#41;&#41;&#41;
+    7.99933
+&gt; &#40;?list&#41;
+Available symbols: &#91;#f #t % &#42; &#42;E&#42; &#42;PI&#42; + - / &lt; &lt;= = &gt; &gt;= ?author ?help ?list ?usage ?version ?welcome &#94; append car cdr cons erf exp false length list nil null? sqrt true write &#93;
+    nil
+&gt; quit
+Wait! You forgot your parenthesis!
+</code></pre><p></div></div></p><p>Next time on /Idorobots/: we learn why this Scheme implementation happened and... other stuff.</p><p><span style="font-size: x-small;"></p><p>This Scheme implementation was based on an implementation by Iain Bucław. I didn't write it all by myself, blame it on my lack of knowledge, lazyness or no lisp experience at all. The next one will be <del>better</del> marginally better.</p><p></span></p><p><strong>2016-02-20</strong>: Adjusted some links & tags.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/_car-__1-2-3__.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">(car '(1 2 3))</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="next"><a href="../entries/city-blueprints.html"><span class="entry-title">City Blueprints</span><i class="fa fa-chevron-right" style="margin-left: 5px;"></i></a></li></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>

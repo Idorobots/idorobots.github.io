@@ -1,0 +1,165 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>ASM development log 1: OliviaBOT</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title=" Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v." name="generator" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>ASM development log 1: OliviaBOT</h1><p>Posted on <time>2011-09-13 16:46</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/asm.html"><span class="label label-info small">ASM</span></a> <a class="tag" href="../tags/artificial-intelligence.html"><span class="label label-info small">Artificial Intelligence</span></a> <a class="tag" href="../tags/d-programming-language.html"><span class="label label-info small">D programming language</span></a> <a class="tag" href="../tags/dsl.html"><span class="label label-info small">DSL</span></a> <a class="tag" href="../tags/irc.html"><span class="label label-info small">IRC</span></a> <a class="tag" href="../tags/lisp.html"><span class="label label-info small">Lisp</span></a> <a class="tag" href="../tags/interpreters.html"><span class="label label-info small">interpreters</span></a> <a class="tag" href="../tags/robots.html"><span class="label label-info small">robots</span></a></nav></div></div></div></header><p><div class="row text-center"><div class="col-xs-10"></p><p><a href='http://www.youtube.com/watch?v=owGykVbfgUE'>Hello fellow programmers.</a> Look at your favourite programming language.</p><p>Now back to Lisp.</p><p>Now back to your favourite language.</p><p>Now <strong>back</strong> to <strong>Lisp</strong>.</p><p>Sadly, it isn't Lisp, but if you stopped wasting your time, it could <strong>feel</strong> like it's Lisp.</p><p>Look down.</p><p>Back up.</p><p>Where are you?</p><p>Reading in OldSpice-guy's voice as I introduce the <strong>ASM</strong> programming language.</p><p>What's on your mind?</p><p>Back at me.</p><p>ASM has it. The expressiveness and brevity augmented by powerful and extensible features.</p><p>Look again.</p><p><strong>ASM</strong> is now usable.</p><p>Anything is possible when your programming language is functional and not imperative.</p><p>It's highly <a href='http://www.youtube.com/watch?v=1yH_j8-VVLo'>munctional</a>.</p><p></div><div class="col-xs-2"></p><p><img src="http://blog.idorobots.org/media/asmdevlog1/asm3.png" alt="asm3" /></p><p></div></div></p><p><a name="preview-more"></a></p><h2><a name="devlog"></a>devLog</h2>Quite a few things have changed since the last dev log entry, but I'll try to keep it short.I gave up on the new parser for now, because I first need to fix the specs (as in <em>actually write them</em>) and think about formalizing the reader and the reader macro facility. The test version can be found in <code>experimental.test</code> module, it's fun, though a little bug-ridden.<p>All you need to do is:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">&gt; &#40;import 'experimental.parser&#41;
+&gt; &#40;parse &quot;some code&quot;&#41;
+</code></pre><p></div></div></p><p>Or...</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">&gt; &#40;import 'experimental.parser&#41;
+&gt; &#40;repl 0&#41; # Which is kind of buggy.
+</code></pre><p></div></div></p><p>Here's some stuff to try out:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">foo: x,y -&gt;
+         &#40;&#42; x y&#41;;
+
+bar: do sum:  &#40;+ 222 3333&#41;;
+        mult: &#40;&#42; 123 321&#41;;
+        &#40;- mult sum&#41;;
+
+baz: &#40;foo bar 23&#41;;
+</code></pre><p></div></div></p><p>Here we define a function <code>foo</code> taking two parameters and multiplying them, a variable <code>bar</code> and a variable <code>baz</code> being a result of <code>foo</code> called with <code>bar</code> and <code>23</code>. The scanner doesn't recognise numbers, so it's pretty limited, but it's still fun. Let's look at the syntax:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">var : expressions ; # Defines a new variable.
+a , b               # Pairs two sub-expressions.
+args -&gt; body        # Creates an anonymous closure.
+</code></pre><p></div></div></p><p>This code translates to:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;var foo &#40;lambda &#40;x y&#41;
+                 &#40;&#42; x y&#41;&#41;&#41;
+&#40;var bar &#40;do &#40;var sum &#40;+ 222 3333&#41;&#41;
+             &#40;var mult &#40;&#42; 123 321&#41;&#41;
+             &#40;- mult sum&#41;&#41;&#41;
+&#40;var baz &#40;foo bar 23&#41;&#41;
+</code></pre><p></div></div></p><p>The former looks a tad better if you ask me, but it's nothing near the official syntax I intend ASM to support out of the box.</p><p>You'll probably notice, that even though the syntax is redefined to suit the <a href='http://en.wikipedia.org/wiki/Domain-specific_language'>specific domain</a>, ASM still makes it easy to understand it, even after some time, because it translates it to unified, lispy representation. That's a feature I'd like to explore more in the future.</p><p>In other news, I spent some time thinking about the <a href='http://en.wikipedia.org/wiki/Unit_type'>UnitType</a> in ASM and figured that CommonLispy way (<code>nil</code> = <code>'nil</code> = <code>&#40;&#41;</code> = <code>'&#40;&#41;</code>) is not quite cutting it. Translating 0-Tuple to <code>fnord</code> introduced more problems than it solved, so I've settled for a Schemy/Haskelly compromise - the 0-Tuple is the UnitType, and <code>fnord</code> is an alias to <code>&#40;&#41;</code>. It doesn't sacrifice any symmetry at all and surprisingly it didn't break any old code.</p><p>I also had some fun with lazy evaluation, implemented native <a href='http://en.wikipedia.org/wiki/Futures_and_promises'>Promise</a>, <code>lazy</code> macro and a bunch of basic functions in <code>imports.lazy</code>. There's even a little example in <code>samples.lazy</code>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;import 'imports.lazy&#41;
+
+&#40;function ++ &#91;ref&#93;
+  &#40;+ 1 ref&#41;&#41;
+
+&#40;var all-integers &#40;&#91;n -&gt;
+                      &#40;join&#126; n &#40;self &#40;++ n&#41;&#41;&#41;&#93;
+                   1&#41;&#41;
+
+&#40;function squareduce &#91;n&#93;
+  &#40;reduce &#91;a b -&gt;
+               &#40;+ &#40;&#42; a a&#41; &#40;&#42; b b&#41;&#41;&#93;
+          &#40;take n &#40;map&#126; &#91;x -&gt; &#40;&#42; x x&#41;&#93;
+                        all-integers&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>It creates a lazy list of all the positive integers greater than 0 and defines a function named <code>squareduce</code> which does some math on this list. You would be surprised how quickly the values grow!</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">&gt; &#40;import 'samples.lazy&#41;
+&gt; &#40;map squareduce &#40;range 1 15&#41;&#41;
+    &#40;1 17 370 137156 1.88118e+10 3.53883e+20
+     1.25233e+41 1.56833e+82 2.45965e+164
+     6.0499e+328 3.66013e+657 1.33966e+1315
+     1.79468e+2630 inf&#41;
+</code></pre><p></div></div></p><p>ASM does not support BigNums yet, so (squareduce 15) is equal infinity. The lazy evaluation is such a mind bending feature that I'm considering making it default in the language, just like the <a href='http://en.wikipedia.org/wiki/Haskell_(programming_language'>Haskell</a>) guys.</p><p>Lastly, I fixed the error messages. Debugging is now WAY easier:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">&gt; &#40;import 'tests.test2&#41;
+    tests/test2.asm&#40;4&#41;: Expected exactly 1 argument instead of 2.
+    tests/test2.asm&#40;4&#41;: Issued here: `&#40;error &quot;test lol&quot; &#40;quote wat?&#41;&#41;'.
+</code></pre></div></div><p>It still needs some care for the built-in values and functions because they don't have any source positions that could be displayed.</p><p>All these changes should be available from the master branch of <a href='https://github.com/Idorobots/asm'>ASM repo</a> at <del>google.code</del> GitHub.</p><h2><a name="oliviabot"></a>OliviaBOT</h2>While debugging and doing general maintenance arround ASM I figured it'd be easier for me to catch bugs early if I started some small hackish project using ASM, and since ASM is a dynamic language aimed at anything <a href='http://en.wikipedia.org/wiki/Artificial_intelligence'>AI</a> I figured I could use it for my IRC bot.The bot, called <strong>OliviaBOT</strong>, was written entirely in the <a href='http://d-programming-language.org'>D programming language</a>, and even though it worked well it was really clumsy.Each patch, new extension and whatnot made it disconnect and reload the binary, and since I intended it to be not only a simple IRC helper, but more of a long-running <a href='http://media.giantbomb.com/uploads/1/15592/523093-borg_large.jpg'>daemon-helper-startrek-thing</a> in the future, it was unacceptable.<p>So there we go. I have rewritten Olivia in ASM.</p><p>Since ASM doesn't have a working IO library I've decided to glue it to my ready-made IRC Client written in D instead of writing some crap I would surely scrap later. It required some shallow bindings translating IRC Client's API to ASM functions, but was rather straightforward:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">auto irc = new IRCConnection&#40;host, port&#41;;
+auto ASM = new Interpreter&#40;&#41;;
+
+ASM.define&#40;&quot;irc-user&quot;,
+delegate Expression &#40;ref Scope s, Expression&#91;&#93; args&#41;{
+    auto nick = args&#91; 0&#93;.eval&#40;s&#41;;
+
+    irc.user&#40;nick.toString&#91;1 .. $-1&#93;&#41;;
+    return nick;
+}, 1&#41;;
+
+ASM.define&#40;&quot;irc-nick&quot;,
+delegate Expression &#40;ref Scope s, Expression&#91;&#93; args&#41;{
+    auto nick = args&#91; 0&#93;.eval&#40;s&#41;;
+
+    irc.nick&#40;nick.toString&#91;1 .. $-1&#93;&#41;;
+    return nick;
+}, 1&#41;;
+
+ASM.define&#40;&quot;irc-join&quot;,
+delegate Expression &#40;ref Scope s, Expression&#91;&#93; args&#41;{
+    auto channel = args&#91; 0&#93;.eval&#40;s&#41;;
+
+    irc.join&#40;channel.toString&#91;1 .. $-1&#93;&#41;;
+    return channel;
+}, 1&#41;;
+
+ASM.define&#40;&quot;irc-msg&quot;,
+delegate Expression &#40;ref Scope s, Expression&#91;&#93; args&#41; {
+    auto to = args&#91; 0&#93;.eval&#40;s&#41;.toString&#91;1 .. $-1&#93;;
+    auto msg = args&#91; 1&#93;.eval&#40;s&#41;;
+
+    irc.msg&#40;to, msg.toString&#91;1 .. $-1&#93;&#41;;
+    return msg;
+}, 2&#41;;
+</code></pre><p></div></div></p><p>Now these functions are accessible from ASM:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme"># Bot setup:
+&#40;var &#42;nick&#42; &quot;Olivia&quot;&#41;
+&#40;var &#42;password&#42; &#42;coolface&#42;&#41;
+&#40;var &#42;channels&#42; '&#91;&quot;#asmpl&quot;&#93;&#41;
+
+# Bot init:
+&#40;irc-user &#42;nick&#42;&#41;
+&#40;irc-nick &#42;nick&#42;&#41;
+&#40;irc-msg &quot;NickServ&quot; &#40;append &quot;identify &quot; &#42;password&#42;&#41;&#41;
+
+&#40;map irc-join &#42;channels&#42;&#41;
+</code></pre><p></div></div></p><p>For simplicity reasons it doesn't wait for any responses from the server. I've also thrown out the logging code from these snippets for readability.</p><p>For now the commands framework is fairly simple, it uses two short macros and two alist for defining and storing the commands:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme"># Command alists:
+&#40;var &#42;irc-command-alist&#42;&#41;
+&#40;var &#42;command-alist&#42;&#41;
+
+# Defines an irc-command.
+# Example:
+# &#40;irc-command name &#91;args&#93;
+#   body&#41;
+&#40;macro irc-command &#91;name args .tuple body&#93;
+  `&#40;push! &#40;tuple $name &#40;lambda $args $&#40;append '&#40;do&#41; body&#41;&#41;&#41;
+          &#42;irc-command-alist&#42;&#41;&#41;
+
+# defines a user command.
+# Example:
+# &#40;command name &#91;args&#93;
+#   &quot;Doc string.&quot;
+#   &quot;Usage string.&quot;
+#   body&#41;
+&#40;macro command &#91;name args doc usage .tuple body&#93;
+  `&#40;push! &#40;tuple '$name
+                 &#40;lambda $args $&#40;append '&#40;do&#41; body&#41;&#41;
+                 $doc
+                 $&#40;append &quot;Usage: &quot; usage &quot;.&quot;&#41;&#41;
+         &#42;command-alist&#42;&#41;&#41;
+</code></pre><p></div></div></p><p>Whenever there's any input from the IRC server pending, the bot preprocesses and tokenizes it for convenience, then executes irc-commands if need be and in case of a <code>PRIVMSG</code> it dispatches the message looking for bot commands. Boring code, so I'll skip it.</p><p>This is how you define commands:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme"># Nick already taken:
+&#40;irc-command &quot;433&quot; &#91;from asterix nick msg&#93;
+  &#40;log &quot;--- Nick &quot; nick &quot; already taken.&quot; \newline&#41;
+  &#40;set! &#42;nick&#42; &#40;append &#42;nick&#42; &quot;&#95;&quot;&#41;&#41;
+  &#40;irc-nick &#42;nick&#42;&#41;    	      # Try another nick!
+  &#40;map irc-join &#42;channels&#42;&#41;&#41;
+
+# Somebody quits:
+&#40;irc-command &quot;QUIT&quot; &#91;nick msg&#93;
+  &#40;log &quot;--- &quot;
+       &#40;strip-nick nick&#41; &quot; left the channel &#40;&quot; msg &quot;&#41;.&quot; \newline&#41;&#41;
+
+# ...
+
+# Command list:
+&#40;command ?commands &#91;nick channel&#93;
+  &quot;Lists available commands.&quot;
+  &quot;`?commands'&quot;
+  &#40;irc-msg channel &#40;list-alist &quot;Commands: &quot; &#42;command-alist&#42;&#41;&#41;&#41;
+
+# RPG anybody?
+&#40;command !roll &#91;nick channel dice&#93;
+  &quot;Rolls some dice.&quot;
+  &quot;`!roll dice'&quot;
+  &#40;irc-msg channel
+           &#40;stringof &#40;random &#40;second &#40;assoc dice &#42;dice-alist&#42;&#41;&#41;&#41;&#41;&#41;&#41;
+
+# Search:
+&#40;command ?d &#91;nick channel phrase&#93;
+  &quot;DuckDuckGoes `phrase' on the interwebs.&quot;
+  &quot;`?d phrase'&quot;
+  &#40;irc-msg channel &#40;append &quot;http://duckduckgo.com/?q=&quot;
+                           &#40;trspace &#40;stringof phrase&#41;&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>Now, there are some helper functions obviously, such as <code>strip-nick</code> or <code>list-alist</code>, but I'm sure these are self-explanatory and I'll skip them aswell. As you can see these are tiny!</p><p>Here's a list of all available commands so far:</p><ul><li><code>?apropos</code> - Writes docstring and usage info for a command.</li><li><code>?commands</code> - Lists the available commands.</li><li><code>!eval</code> - Disabled by default, evaluates some ASM code.</li><li><code>!set</code> - Sets a description to a variable. Variables can be queried later using ?query syntax.</li><li><code>?stuff</code> - Lists !set variables.</li><li><code>?g</code> - Searches the net using Google.</li><li><code>?d</code> - Searches the net using <a href='http://duckduckgo.com/'>DuckDuckGo</a>. This is a special command. Whenever somebody <code>?queries</code> Olivia and there is no <code>!set</code> variable for that query, she'll <code>?d</code> it on the net. It's especially useful for DuckDuckGoes <code>!bang</code> syntax: <code>?!wiki koza</code> will search Wikipedia for the term <a href='http://en.wikipedia.org/wiki/Koza'>koza</a>.</li><li><code>?dice</code> - Lists available dice.</li><li><code>!roll</code> - Rolls a <code>?dice</code>.</li><li><code>!note</code> - Leaves a note for a user, that will be sent to him whenever he becomes active (either by JOINing the channel, or PRIVMSGing it).</li></ul><p>Here's a test run (you can check it out yourself most of the time on <del><strong>#asmpl at freenode</strong></del>):</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">&#40;17:40:01&#41; Kajtek: ?!cpp socket
+&#40;17:40:02&#41; Olivia: http://duckduckgo.com/?q=!cpp+socket
+&#40;17:40:28&#41; Kajtek: ?dice
+&#40;17:40:29&#41; Olivia: Dice: d4 d6 d8 d10 d100 d% d12 d20
+&#40;17:40:34&#41; Kajtek: !roll d%
+&#40;17:40:35&#41; Olivia: 86
+&#40;17:40:55&#41; Kajtek: !set socket &quot;Some C networking crap.&quot;
+&#40;17:40:59&#41; Kajtek: ?socket
+&#40;17:41:00&#41; Olivia: Some C networking crap.
+&#40;17:41:27&#41; Kajtek: ?commands
+&#40;17:41:27&#41; Olivia: Commands: !note ?stuff !set ?dice !roll ?d ?g ?commands ?apropos
+&#40;17:41:43&#41; Kajtek: ?apropos !note
+&#40;17:41:44&#41; Olivia: Usage: `!note nick msg'. Leaves a `msg' to `nick'.
+&#40;17:42:41&#41; Kajtek: Olivia: thanks!
+&#40;17:42:42&#41; Olivia: Kajtek: no probs.
+&#40;17:44:31&#41; Kajtek: Olivia, you're kind of neat!
+&#40;17:44:32&#41; Olivia: Kajtek: thanks!
+</code></pre><p></div></div></p><p><strong>2016-02-18</strong>: Adjusted some links & tags.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/lrrhpse_.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">LRRHPSE!</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="next"><a href="../entries/land-of-lisp.html"><span class="entry-title">Land of Lisp</span><i class="fa fa-chevron-right" style="margin-left: 5px;"></i></a></li></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
