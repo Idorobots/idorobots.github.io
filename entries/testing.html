@@ -1,0 +1,306 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Testing</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title=" Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v." name="generator" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>Testing</h1><p>Posted on <time>2011-03-20 21:20</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/c.html"><span class="label label-info small">C</span></a> <a class="tag" href="../tags/c++.html"><span class="label label-info small">C++</span></a> <a class="tag" href="../tags/d-programming-language.html"><span class="label label-info small">D programming language</span></a> <a class="tag" href="../tags/java.html"><span class="label label-info small">Java</span></a> <a class="tag" href="../tags/testing.html"><span class="label label-info small">testing</span></a> <a class="tag" href="../tags/unittesting.html"><span class="label label-info small">unittesting</span></a></nav></div></div></div></header><p>Testing in programming is pretty important, no doubts about it, too bad that some languages make it difficult to test the code easly. For instance C++ is pretty limited in terms of <a href='http://en.wikipedia.org/wiki/Design_by_contract'>DbC</a> and unit testing. All it ever supplied to programmers was a little =assert()= macro that stopped the program providing minimal info about the error and the place it was "caught" in. I mean there are exceptions in C++ and they are pretty usefull, but still it's not enough and requires lots of effort in lerning and implementing correctly. One can still say there are libraries such as CppUnit for those purposes, but we all know how it goes - the more I need to do to get some minor advantage the less I'm interrested in it, and unit testing is so underestimated it's not considered an advantage to have a working piece of code anymore, how about that? And speaking of DbC in C++... It is possible... <em>bam</em> (A sound of a thousand readers going "whaaa" this instant.)</p><p><a name="preview-more"></a></p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="c++">//So we have this class that we want to DbCup a little.
+class TisWellBeTestin {
+    int bar;                //It has some fields.
+    char foo;
+
+    public:
+    int fooBar &#40;char foo&#41; { //And a rather simple method.
+        this-&gt;foo = foo;
+        return bar;
+    }
+};
+</code></pre><p></div></div></p><p>How it's done? First stop: class invariant.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="c++">class TisWellBeTestin {
+    int bar;
+    char foo;
+
+    //We make this little private method that checks our objects state
+    //at every entry and exit of all the methods.
+    void &#95;&#95;invariant&#40;&#41; {
+        assert&#40;bar != 0&#41;;
+        assert&#40;foo != 'A'&#41;;
+    }
+
+    public:
+    int fooBar &#40;char foo&#41; {
+        &#95;&#95;invariant&#40;&#41;;  //Like this...
+        ...
+        &#95;&#95;invariant&#40;&#41;;    //And this.
+        return bar;
+    }
+};
+</code></pre><p></div></div></p><p>So far so good, and it even works. We can clearly see that this was easy, but we got ourselves some extra code that does not look any elegant. Let's move on. Next stop: parameter and return value controll:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="c++">class TisWellBeTestin {
+    int bar;
+    char foo;
+
+    void &#95;&#95;invariant&#40;&#41; { ... }
+
+    public:
+    int fooBar &#40;char foo&#41; {
+        //Lets test then... First the parameters.
+        assert&#40;foo != 'A'&#41;;
+        &#95;&#95;invariant&#40;&#41;;
+        ...
+        &#95;&#95;invariant&#40;&#41;;
+
+        //Now the return value.
+        //This one is a little tricky, we need to store the return value temporary.
+        int tmp = bar; //Not the happiest example, I know. Deal with it.
+        assert&#40;tmp != 0&#41;;
+        return tmp;
+    }
+};
+</code></pre><p></div></div></p><p>Et viola, our TisWellBeTestin class could be considered safe now. Ugly, but safe. There is a way to fix the ugliness a little, though...</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="c++">class TisWellBeTestin {
+    int bar;
+    char foo;
+
+    void &#95;&#95;invariant&#40;&#41; { ... }
+
+    public:
+    int foobar &#40;char foo&#41; {
+        //We need structs. Structs everywhere!
+        struct Sentry {
+            int result;
+            Sentry&#40;&#41; {                  //Ctor checks our preconditions.
+                assert&#40;foo != 'A'&#41;;
+                &#95;&#95;invariant&#40;&#41;;          //And invariants.
+            }
+            &#126;Sentry&#40;&#41; {                 //Dtor checks the postconditions.
+                assert&#40;result != 0&#41;;
+                &#95;&#95;invariant&#40;&#41;;          //Also invariants.
+            }
+        } &#95;&#95;sentry;                     //Preconditions are checked here.
+
+        ...
+
+        //Still a little tricky.
+        &#95;&#95;sentry.result = bar;
+
+        return bar;
+    }                                   //Postconditions here.
+};
+</code></pre><p></div></div></p><p>Looks a lot better now, and we used a STRUCT, I thought these were extinct these days. Anyway, this little example could be improved - we could add <code>#ifdef</code> and <code>#endif</code> not to include the testing code in the release version, or think about optimising all this crap. We still need a unittest that will test our class as a single unit, though.</p><p>And now the bad part about it. Imagine we want to derive TisWellBeTestin a couple of times, mixins and virtual inheritence involved. That means, we need to check super classes invariants correctly, and handle virtual functions and the mixins, but what about virtual inheritence... Yeah, you're right, it's not gonna happen.</p><p>Moving to Java I've got to admit that I don't know of a better way to use DbC in Java, but I'm sure there is a better way so lets skip to unit testing, this will also apply for C++.</p><p>"Hey, this is Java, it's got to be awesome!" Not really, let me get a grip on the old JUnit3 (haven't had a nerve to use JUnit4, pardon me please) and let's see.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="java">//Again, our example class.
+public class TisWellBeUnitTestin {  //Funny, it fits well into Javas naming convention.
+    private int bar = 23;
+    private char foo = 'F';
+
+    public int fooBar&#40;char foo&#41; {
+        this.foo = foo;
+        return bar;
+    }
+}
+
+//////////Some other remote place &#40;which is good, I know... Sheesh.&#41;
+
+import junit.framework.TestCase;    //Note: this isn't part of the language it's an extra package.
+public class TisWellBeUnitTestinTest extends TestCase {
+    public void testFooBar&#40;&#41; {
+        TisWellBeTestin test = new TisWellBeTestin&#40;&#41;;
+
+        test.fooBar&#40;'4'&#41;;
+
+        assertEquals&#40;23, test.bar&#41;;     //1
+        assertEquals&#40;'4', test.foo&#41;;    //2
+    }
+}
+</code></pre><p></div></div></p><p>Pretty neat, we've got our test case and we didn't have to add anything to the existing code... Except it won't compile. Note that #1 and #2 are both private. We can either make them public again, or generate getters/setters for them. Neither of these two sounds good to me, though the latter is usually accepted as a solution. Not to mention the need for a separate library in the first place. C++ shares those cons too.</p><p>How about D? "Hey Kieth, you're one hell of a handsome stalion and a D enthusiast, tell us how it's done!"</p><p><em>in the background: "I bet it kicks ass..."</em></p><p>Well, yes and no but I'm pretty happy with the way D does this kind of sh... stuff:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">//As usually we have our test class...
+class TisWellBeTestin {
+    int bar = 23;
+    char foo = 'F';
+
+    int fooBar&#40;char foo&#41; {
+        this.foo = foo;
+        return bar;
+    }
+}
+</code></pre><p></div></div></p><p>And <em>bam</em>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">//Now with contracts and unittest.
+class TisWellBeTestin {
+    private int bar = 23;
+    private char foo = 'F';
+
+    public int fooBar&#40;char foo&#41;
+    in {                         //Preconditions.
+        assert&#40;foo != 'A'&#41;;
+    }
+    out&#40;result&#41; {               //Postconditions.
+        assert&#40;result != 0&#41;;
+    }
+    body {                      //Function implementation.
+        this.foo = foo;
+        return bar;
+    }
+
+    invariant&#40;&#41; {               //Class invariant.
+        assert&#40;bar != 0&#41;;
+        assert&#40;foo != 'A'&#41;;
+    }
+
+    unittest {                  //Unittest.
+        auto test = new TisWellBeTestin&#40;&#41;;
+        assert&#40;test.bar == 23&#41;;
+        assert&#40;test.foo == 'F'&#41;;
+
+        test.fooBar&#40;'h'&#41;;
+        assert&#40;test.foo == 'h'&#41;;
+        assert&#40;test.fooBar&#40;'H'&#41; == 23&#41;;
+    }
+}
+</code></pre><p></div></div></p><p>All we gotta do is compile this with <code>-debug -unittest</code> (as for DMD compiler), or <code>-fdebug -funittest</code> (as for GNU GDC). It all happens automagically, the pre/post conditions in a function are checked at every entry/exit, so is the class invariant. If we compile it with -funittest it'll automaticly add our unittest block to the binary. If we don't use those compiler switches it gets skipped, as simple as that. It's pretty readable aswell. Works with inheritance too! What's not ok with this? Maby it's just me, but the fully DbC version has three times as many lines. Good grief, look at all the extra code we need, this is outrageus! This is insane! <a href='http://i54.tinypic.com/vcrsie.png'>This is madness</a>. It's not worthy the extra time you'd say. Maby it's just me, maby Intelligent IDEs can fix this... Ok, I kind of hate this because I use a simple editor, ugotproblmwitdat?</p><p>The other thing is the unittest itself is pretty simple, it doesn't even provide any stats whatsoever. Let's fix it with a little code:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ utils.testing
+ Simple yet functional testing framework for the D programming language.
+ Copyright &#40;C&#41; 2011 Kajetan Rzepecki
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+module utils.testing;
+
+/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ UnittestException
+ Exception thrown in the unittests, it's more convinient than simple asserts.
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+class UnittestException : Exception {
+    string what;
+    this&#40;string type, string file, string line, string expected, string got&#41; {
+        what = &quot;Unittest assertion &#40;\&quot;&quot;&#126;type&#126;&quot;\&quot;&#41; failure at &quot;&#126;file&#126;&quot;&#40;&quot;&#126;line&#126;&quot;&#41;: expected = &quot;&#126;expected&#126;&quot;, got = &quot;&#126;got&#126;&quot;.&quot;;
+        super&#40;what&#41;;
+    }
+    this&#40;string file, string line&#41; {
+        what = &quot;Unittest assertion failure at &quot;&#126;file&#126;&quot;&#40;&quot;&#126;line&#126;&quot;&#41;.&quot;;
+        super&#40;what&#41;;
+    }
+    override string toString&#40;&#41; {
+        return what;
+    }
+}
+
+/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ TestCase
+ A test class.
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+scope class TestCase {
+    string name;
+    int run = 0;
+    Exception&#91;&#93; fails;
+
+    this&#40;string name = &quot;&quot;&#41; {
+        this.name = name;
+    }
+
+    /&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+     &#126;this
+     This is a scope class, so its instances get destroyed at the scope end.
+     This summarizes the test.
+     &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+    import std.stdio : writeln, write;
+    &#126;this&#40;&#41; {
+        write&#40;&quot;Test case &quot;&#126;name&#126;&quot; &quot;&#41;;
+        if&#40;fails.length&#41; {
+            writeln&#40;&quot;failed.&quot;&#41;;
+            writeln&#40;&quot;\tassertions: &quot;, run&#41;;
+            writeln&#40;&quot;\tassertions passed: &quot;, run - fails.length&#41;;
+            writeln&#40;&quot;\tassertions failed: &quot;, fails.length&#41;;
+            writeln&#40;&quot;\tFailures:&quot;&#41;;
+            foreach&#40;f; fails&#41; {
+                writeln&#40;&quot;\t\t&quot;, f&#41;;
+            }
+        }
+        else writeln&#40;&quot;passed.&quot;&#41;;
+    }
+
+    /&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+     TestCase.failure
+     An empty assertion, always to be an error.
+     &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+    void failure&#40;int line = &#95;&#95;LINE&#95;&#95;, string file = &#95;&#95;FILE&#95;&#95;&#41; {
+        run++;
+        fails &#126;= new UnittestException&#40;file, to!string&#40;line&#41;&#41;;
+    }
+
+    /&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+     TestCase.success
+     &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+    void success&#40;&#41; {
+        run++;
+    }
+
+    /&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+     TestCase.assertion
+     e.g. test.assertion!&#40;&quot;!=&quot;&#41;&#40;3, 3.1415&#41;;
+     &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+    import std.conv : to;
+    void assertion&#40;string type, T&#41;&#40;T got, T expected, int line = &#95;&#95;LINE&#95;&#95;, string file = &#95;&#95;FILE&#95;&#95;&#41; {
+        run++;
+        mixin&#40;&quot;if&#40;!&#40;got &quot;&#126;type&#126;&quot; expected&#41;&#41;&quot;
+                &quot;fails &#126;= new UnittestException&#40;type, file, to!string&#40;line&#41;,&quot;
+                                                &quot;to!string&#40;expected&#41;, to!string&#40;got&#41;&#41;;&quot;&#41;;
+    }
+
+    /&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+     TestCase.assertion
+     e. g. test.assertion&#40;2 == 3&#41;;
+     &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+    void assertion&#40;T : bool&#41;&#40;T got, int line = &#95;&#95;LINE&#95;&#95;, string file = &#95;&#95;FILE&#95;&#95;&#41; {
+        run++;
+        if&#40;!got&#41;
+            fails &#126;= new UnittestException&#40;&quot;bool&quot;, file, to!string&#40;line&#41;, &quot;true&quot;, &quot;false&quot;&#41;;
+    }
+}
+</code></pre><p></div></div></p><p>A brief explanation: We count assertions and we collect the exceptions that normally would be thrown (for displaying convinience) if the assertions fail. I have to note, that this is a scope class, and that means it's allocated on the stack unlike regular D classes, AND that means it gets deleted after we leave current scope so we can put all the stats into the dtor. The <code>TestCase.failure</code> method is en equivalent of an empty assertion, <code>TestCase.success</code> is rather selfexplanatory. The <code>TestCase.assertion</code> is at liest a little cheesy for someone not yet touched by the glorious D. It's a template that takes a string and a type as it's template parameters, the string is the kind of relation we want to test something for (e. g. "!=", or ">"), next we see a mixin, and this is something awesome about D - since string literals are immutable, the expression in the mixin can be evaluated and compiled into the code an compiletime. It fulfills the need for most assertion types from JUnit (such as <code>assertEquals</code>, <code>assertTrue</code> etc) with only 5 lines of code. <a href='http://i52.tinypic.com/2ebzdl3.jpg'>Me rikey!</a> The second <code>TestCase.assertion</code> implementation is a separate, specialized template (note there is no generic implementation of this template) for more convinient boolean checks.</p><p>This is how you use this framework:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">//Code taken from a minimal Scheme implementation I'm on and about atm.
+import utils.testing : TestCase;
+unittest {
+    scope test = new TestCase&#40;&quot;Shell&quot;&#41;;
+
+    auto shell = new Shell&#40;&#41;;
+    auto wat = new Cell&#40;Cell.ATOM, &quot;3.14&quot;&#41;;
+    shell.set&#40;&quot;wat&quot;, wat&#41;;
+
+    test.assertion!&#40;&quot;is&quot;&#41;&#40;shell.get&#40;&quot;wat&quot;&#41;, wat&#41;;
+
+    shell = new Shell&#40;shell&#41;;
+    auto lol = new Cell&#40;Cell.ATOM, &quot;2.71&quot;&#41;;
+    shell.set&#40;&quot;lol&quot;, lol&#41;;
+
+    test.assertion!&#40;&quot;is&quot;&#41;&#40;shell.get&#40;&quot;lol&quot;&#41;, lol&#41;;
+    test.assertion!&#40;&quot;is&quot;&#41;&#40;shell.get&#40;&quot;wat&quot;&#41;, wat&#41;;
+
+    shell = shell.parent;
+    test.assertion!&#40;&quot;is&quot;&#41;&#40;shell.get&#40;&quot;wat&quot;&#41;, wat&#41;;
+
+    try {
+        shell.get&#40;&quot;lol&quot;&#41;;
+        test.failure;
+    }
+    catch&#40;UndefinedSymbol&#41; {
+        test.success;
+    }
+
+    try {
+        shell.get&#40;&quot;omfg&quot;&#41;;
+        test.failure;
+    }
+    catch&#40;UndefinedSymbol&#41; {
+        test.success;
+    }
+}
+</code></pre><p></div></div></p><p>The example outcome (not the actual <em>wink, wink</em>):</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">Test case Cell failed.
+    assertions: 6
+    assertions passed: 4
+    assertions failed: 2
+    Failures:
+        Unittest assertion &#40;&quot;!=&quot;&#41; failure at src/interpreter/cell.d&#40;67&#41;: expected = &#40;wat 32 54.3 3.14 3.141592&#41;, got = &#40;wat 32 54.3 3.14 3.141592&#41;.
+        Unittest assertion &#40;&quot;!=&quot;&#41; failure at src/interpreter/cell.d&#40;74&#41;: expected = #&#91;compound-procedure&#93;, got = #&#91;compound-procedure&#93;.
+Test case Shell failed.
+    assertions: 6
+    assertions passed: 4
+    assertions failed: 2
+    Failures:
+        Unittest assertion &#40;&quot;!=&quot;&#41; failure at src/interpreter/shell.d&#40;38&#41;: expected = 3.14, got = 3.14.
+        Unittest assertion failure at src/interpreter/shell.d&#40;53&#41;.
+</code></pre><p></div></div></p><p>The actual outcome:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">Test case Cell passed.
+Test case Shell passed.
+</code></pre><p></div></div></p><p><strong>2016-02-20</strong>: Adjusted some links & tags.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/hello-world_.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Hello world!</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="next"><a href="../entries/mixins-make-sense.html"><span class="entry-title">Mixins make sense</span><i class="fa fa-chevron-right" style="margin-left: 5px;"></i></a></li></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
