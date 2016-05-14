@@ -1,0 +1,135 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>ASM development log 0: The Game</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title="ASM development log 0: The Game Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v.1.3.2" name="generator" /><meta content="Idorobots" name="author" /><meta content="Kajetan Rzepecki, Idorobots, dev-blog, devblog, blog, Clojure, Lisp, Erlang, technology, electronics, hacks, computer science" name="keywords" /><meta content="Yes Mom, I *do* robots." name="description" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>ASM development log 0: The Game</h1><p>Posted on <time>2011-08-11 19:46</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/asm.html"><span class="label label-info small">ASM</span></a> <a class="tag" href="../tags/game-dev.html"><span class="label label-info small">Game Dev</span></a> <a class="tag" href="../tags/lisp.html"><span class="label label-info small">Lisp</span></a> <a class="tag" href="../tags/dungeon-crawlers.html"><span class="label label-info small">dungeon crawlers</span></a> <a class="tag" href="../tags/games.html"><span class="label label-info small">games</span></a> <a class="tag" href="../tags/interpreters.html"><span class="label label-info small">interpreters</span></a></nav></div></div></div></header><p>It's high time for more <a href='https://github.com/Idorobots/asm'>Another Syntactic Monstrosity</a> examples, but first let's take a look at its development.</p><h2><a name="devlog"></a><a href="#devlog">devLog</a></h2>I spent the last few days on redesigning the parsing strategy, ATM the interpreter reads the raw input, lexes it using static, immutable grammar specs and then parses the token stream into an AST, all this hardcoded in D.This proves to be fast, but it's nearly non-tweakable. That's not what I intended ASM to be and it makes some neat features, such as overriding Tuple evaluator, impossible.<p>The new parsing strategy reminds of CommonLisp reader and reader-macros:</p><ul><li>The raw input is passed to the lexer (written in D) that uses dynamic syntax table - a set of regular expressions describing the syntax (defined in ASM) to tokenize the input into a token stream.</li><li>Next, the token stream is passed to the parser (written in ASM with default implementation in D), that uses ASM functions, correlated to the syntax table, to dispatch the token stream and translate it to basic, lispy S-expressions (see <a href='http://en.wikipedia.org/wiki/LR_parser'>LR parser</a> for details on how it's done).This will allow ASM to act like any other language, given there's the syntax table available, making it perfect for DSL programming.</li></ul><p>For example:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;lambda &#40;x y&#41; &#40;pow &#40;+ x y&#41; 2&#41;&#41;
+</code></pre><p></div></div></p><p>...might be written as:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#91;x y =&gt; &#40;x + y&#41;&#94;2&#93;
+</code></pre><p></div></div></p><p>...and ASM will happily accept it. Awesome! <a name="preview-more"></a> There was little activity at <a href='https://github.com/Idorobots/asm'>the <del>google.code</del> Github page</a>, because the language specs is changing constantly, and most of the tests are outside of the project. Furthermore, I'm keeping myself from coding much in ASM - simply there will be less code to break with newer specs versions. Once I'm happy with the specs I'll most certainly start a bigger project using ASM.</p><h2><a name="the-game"></a><a href="#the-game">The Game</a></h2>It's an implementation of a simple 'game' from <a href='http://landoflisp.com/'>the Land of Lisp</a> book in ASM, you can get it from the <a href='https://github.com/Idorobots/asm'>project page</a>.(The snippets use JavaScript syntax highlighting, so they're not too accurate.)<p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">## Places to go.
+&#40;var &#42;nodes&#42; '{&#40;living-room &#40;You are in the living-room. A wizard is snoring loudly on the couch.&#41;&#41;
+               &#40;garden &#40;You are in a beautiful garden. There is a well in front of you.&#41;&#41;
+               &#40;attic &#40;You are in the attic. There is a giant wielding a torch in the corner.&#41;&#41;
+           # And so on...
+            }&#41;
+
+## Paths to take.
+&#40;var &#42;edges&#42; '{&#40;living-room &#40;garden west door&#41;
+                            &#40;attic upstairs ladder&#41;&#41;
+               &#40;garden &#40;living-room east door&#41;&#41;
+               &#40;attic &#40;living-room downstairs ladder&#41;&#41;
+           # And so on...
+           }&#41;
+
+## Items to steal.
+&#40;var &#42;objects&#42; '{whiskey bucket frog chain #...}&#41;
+
+## Where to steal them.
+&#40;var &#42;object-locations&#42; '&#91;&#40;whiskey living-room&#41;
+                          &#40;bucket living-room&#41;
+                          &#40;frog garden&#41;
+                          &#40;chain garden&#41;
+              # Etc...
+              &#93;&#41;
+
+## Where we at, yo.
+&#40;var &#42;location&#42; 'living-room&#41;
+</code></pre><p></div></div></p><p>Here we have all the required data. I like the lispy naming convention, so my globals too will have ear-muffs (e.g. <code>&#42;neat&#42;</code>). <code>&#42;nodes&#42;</code> set contains the descriptions of all the different places we can visit, <code>&#42;edges&#42;</code> set tells us where we can go. <code>&#42;objects&#42;</code> set contains the list of all the items in the level, and <code>&#42;object-locations&#42;</code> stores their locations. <code>&#42;objects-locations&#42;</code> is a list, an <a href='http://en.wikipedia.org/wiki/Association_list'>alist</a> to be exact, so we can <code>push!</code> and <code>pop!</code> from it in place and use <code>assoc</code> to get the values. Lastly, the <code>&#42;location&#42;</code> variable stores our current location.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;function describe-location &#91;location nodes&#93;
+  &#40;second &#40;assoc location nodes&#41;&#41;&#41;
+
+&#40;function describe-path &#91;edge&#93;
+  `&#40;There is a $&#40;third edge&#41; going $&#40;second edge&#41; from here.&#41;&#41;
+
+&#40;function describe-paths &#91;location edges&#93;
+  &#40;apply append &#40;map describe-path &#40;rest &#40;assoc location edges&#41;&#41;&#41;&#41;&#41;
+
+&#40;function objects-at &#91;loc objs obj-locs&#93;
+  &#40;objs &#91;&#91;obj&#93; &#40;equal? &#40;second &#40;assoc obj obj-locs&#41;&#41;
+                       loc&#41;&#93;&#41;&#41;
+
+&#40;function describe-objects &#91;loc objs obj-locs&#93;
+  &#40;apply append &#40;map &#91;&#91;obj&#93; `&#40;You see a $obj on the floor.&#41;&#93;
+                      &#40;objects-at loc objs obj-locs&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>These functions describe various elements of the game world. <code>describe-path</code> uses quasiquoting and embeds expressions in a tuple <code>&#40;$expression&#41;</code>. <code>describe-paths</code> describes all the <code>edges</code> connected to a <code>location</code> - it maps through the set of edges with <code>describe-path</code> collecting the results. <code>objects-at</code> function uses an anonymous function created with list evaluator <code>&#40;&#91;&#91;args&#93;body&#93;&#41;</code> to select some of the objects from <code>objs</code> set. The "?" in <code>equal?</code> is another naming convention. It's used for predicates and <a href='http://28.media.tumblr.com/tumblr_lh07wiG9j51qc1mnmo1_500.jpg'>I stole it from Scheme</a>.</p><p>Finally, <code>describe-objects</code> describes all the stuff we can see on the floor in our location. These are all pure functional style, since they only use their parameters and no impure functions.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;function look &#91;&#93;
+  &#40;append &#40;describe-location &#42;location&#42; &#42;nodes&#42;&#41;
+           &#40;describe-paths &#42;location&#42; &#42;edges&#42;&#41;
+           &#40;describe-objects &#42;location&#42; &#42;objects&#42; &#42;object-locations&#42;&#41;&#41;&#41;
+
+&#40;function walk &#91;direction&#93; {
+  &#40;var next &#40;first &#40;select &#40;rest &#40;assoc &#42;location&#42; &#42;edges&#42;&#41;&#41;
+                           &#91;&#91;edge&#93; &#40;equal? &#40;second edge&#41; direction&#41;&#93;&#41;&#41;&#41;
+  &#40;if next {
+      &#40;set! &#42;location&#42; &#40;first next&#41;&#41;
+      &#40;look&#41;
+   }
+  '&#40;You can't go there.&#41;&#41;
+}&#41;
+</code></pre><p></div></div></p><p>The <code>look</code> function simply appends all the describe functions results, so we can apply write to them later. <code>walk</code> looks kind of bad. That's because there's no <code>find</code> function implemented in ASM, and I had to improvise with <code>select</code>. It uses set evaluator for the body of the if, and expression comment to make it clear that <code>'&#40;You can't go there.&#41;</code> is the else part. Note that <code>walk</code> is not pure. It changes the state of <code>&#42;location&#42;</code>.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;function pickup &#91;object&#93;
+  &#40;if &#40;member? object
+               &#40;objects-at &#42;location&#42; &#42;objects&#42; &#42;object-locations&#42;&#41;&#41;
+      &#40;do &#40;push! &#40;tuple object 'inventory&#41; &#42;object-locations&#42;&#41;
+          `&#40;You are now carrying the $object&#41;&#41;
+      '&#40;You can't get that.&#41;&#41;&#41;
+
+&#40;function inventory &#91;&#93;
+  &#40;join! 'inventory:
+         &#40;objects-at 'inventory &#42;objects&#42; &#42;object-locations&#42;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>These two functions manage our inventory and items interaction. Not much to see to be honest.</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">## Game REPL:
+&#40;function game-read &#91;&#93;
+  &#40;if &#40;collection? &#40;var command &#40;read&#41;&#41;&#41;
+      &#40;tuple &#40;first command&#41; `&#40;quote $&#40;second command&#41;&#41;&#41;
+      &#40;tuple command&#41;&#41;&#41;
+
+&#40;function game-print &#91;what&#93; {
+  &#40;map &#91;&#91;arg&#93; &#40;write arg \space&#41;&#93; what&#41;
+  &#40;write \newline&#41;
+}&#41;
+
+&#40;function game-repl &#91;&#93; {
+  &#40;var accepted-commands '{look walk pickup inventory quit}&#41;
+  &#40;if &#40;equal? &#40;first &#40;var command &#40;game-read&#41;&#41;&#41;
+              'quit&#41;
+      &#40;game-print '&#40;Bye, bye.&#41;&#41;
+      {&#40;if &#40;member? &#40;first command&#41; accepted-commands&#41;
+          &#40;game-print &#40;eval command&#41;&#41;
+      &#40;game-print '&#40;I don't know this command.&#41;&#41;&#41;
+      &#40;game-repl&#41;
+  }&#41;
+}&#41;
+
+&#40;function new-game &#91;&#93; {
+  &#40;set! &#42;location&#42; 'living-room&#41;
+  &#40;game-print &#40;look&#41;&#41;
+  &#40;game-repl&#41;
+}&#41;
+</code></pre><p></div></div></p><p>These few functions manage our player-game interaction. The <code>game-read</code> function reads the input and makes sure it's well-formed syntactically. The <code>game-print</code> function does the printing - basically maps the <code>write</code> function to whatever is passed to it. Now, the <code>game-repl</code> function reads the input from <code>game-read</code>, validates it semantically and if it's fine, evaluates it and prints the result. Lastly there's the <code>new-game</code> function, resetting the <code>&#42;location&#42;</code> and loading the game.</p><p>Here's a little test-play:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">$ ./asm
+&gt; &#40;import 'examples.game&#41;
+        fnord
+&gt; &#40;new-game&#41;
+You are in the living-room. A wizard is snoring loudly on the couch. There is a
+door going west from here. There is a ladder going upstairs from here. You see a
+ whiskey on the floor. You see a bucket on the floor.
+
+walk upstairs
+You are in the attic. There is a giant wielding a torch in the corner. There is a
+ ladder going downstairs from here.
+
+jump window
+I don't know this command.
+
+walk downstairs
+You are in the living-room. A wizard is snoring loudly on the couch. There is a
+door going west from here. There is a ladder going upstairs from here. You see a
+ whiskey on the floor. You see a bucket on the floor.
+
+pickup whiskey
+You are now carrying the whiskey
+
+inventory
+inventory: whiskey
+
+walk west
+You are in a beautiful garden. There is a well in front of you. There is a door
+going east from here. You see a frog on the floor. You see a chain on the floor.
+
+walk china
+You can't go there.
+
+quit
+Bye, bye.
+&gt;
+</code></pre><p></div></div></p><p><strong>2016-02-18</strong>: Adjusted some links & tags.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/accessing-private-class-members-in-c++.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Accessing private class members in C++</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="next"><a href="../entries/properties-in-the-d-programming-language.html"><span class="entry-title">Properties in the D programming language</span><i class="fa fa-chevron-right" style="margin-left: 5px;"></i></a></li></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>(car '(1 2 3))</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title="(car '(1 2 3)) Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v.1.3.2" name="generator" /><meta content="Idorobots" name="author" /><meta content="Kajetan Rzepecki, Idorobots, dev-blog, devblog, blog, Clojure, Lisp, Erlang, technology, electronics, hacks, computer science" name="keywords" /><meta content="Yes Mom, I *do* robots." name="description" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>(car '(1 2 3))</h1><p>Posted on <time>2011-04-24 22:35</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/agh-ust.html"><span class="label label-info small">AGH-UST</span></a> <a class="tag" href="../tags/d-programming-language.html"><span class="label label-info small">D programming language</span></a> <a class="tag" href="../tags/latmab.html"><span class="label label-info small">Latmab</span></a> <a class="tag" href="../tags/algebra.html"><span class="label label-info small">algebra</span></a> <a class="tag" href="../tags/calculator.html"><span class="label label-info small">calculator</span></a></nav></div></div></div></header><p>So, I'm going to break the usual design-quirk rutine and actually show something fun this time and then we'll return to some OOD stuff I was planning to post.</p><p>It all started with an assignment me and my brethren freshmen got on our programming subject that would be loosely translated to /Programming languages and design methods/ I believe. We had to code a rather simple algebraics calculator that uses infix notation and supports several math functions such as factorial, power et cetera. The more advanced version of this assignment had to implement integrals and plotting so I thought "why the hell not?". Obviously I didn't aim for the second version as it implied a rather advanced framework that would support all kinds of goodies, because I can't stand writting a piece of crap that's only purpose is to work past the rating tests, and such a framework, the fun experience it might be, would take lot's and lot's of time to become of a satisfying elegance level. Yeah, I am picky, you don't even imagine. Anyway there it was, although I wasn't quite satisfied with it, keeping in mind all this "advanced" and "framework" stuff, it turned out quite... we'll see. <a name="preview-more"></a> I called it "latmab" for giggles and <del>you can get it <a href='http://student.agh.edu.pl/~krzepeck/projects/latmab.tar'>right here</a>.</del> (Nope. Chuck Graduatesta. I guess you're better off this way.)</p><p>And now some explanation: we normally use C++ but the profesor, a kind gentleman he is, allowed me to use <a href='http://www.digitalmars.com/d/2.0/index.html'>D</a>, hence latmab is written in D.</p><p>...</p><p><a href='http://i559.photobucket.com/albums/ss33/turtlesoup9/BATMAN_LIEK_CHOCOLATE_MILK2.png'>I liek D</a>.</p><p>Latmab has a rather simple parser that makes a havy use of regexps and <a href='http://cache.ohinternet.com/images/1/13/Awesome.png'>RPN</a>. I also had some design issues so... Go read the README. That's it. NEXT!</p><p>No seriously, this code is ugly so I'll be skipping alot. We'll start with the <a href='http://en.wikipedia.org/wiki/Read-eval-print_loop'>REPL</a>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">char&#91;&#93; input;
+
+write&#40;prompt&#41;;
+while&#40;stdin.readln&#40;input&#41;&#41; {
+    auto list = &quot;Aviable operations: &quot;&#126;parser.getBinaryOps&#126;&quot;\n&quot;
+                &quot;Aviable variables:  &quot;&#126;parser.getGlobalScope&#126;&quot;\n&quot;
+                &quot;Aviable functions:  &quot;&#126;parser.getGlobalFunctions&#126;&quot;\n&quot;;
+
+    auto m = match&#40;input, regex&#40;&quot;prompt\\s&#42;=\\s&#42;&quot;&#41;&#41;;
+    if&#40;!m.empty&#41; {
+        prompt = m.post&#91;0..$-1&#93;.idup&#126;&quot; &quot;;
+    }
+    else if&#40;input == &quot;exit\n&quot; || input == &quot;x\n&quot; ||
+            input == &quot;quit\n&quot;  || input == &quot;q\n&quot;&#41;       break;
+    else if&#40;input == &quot;help\n&quot; || input == &quot;h\n&quot;&#41;        writeln&#40;help&#41;;
+    else if&#40;input == &quot;list\n&quot; || input == &quot;l\n&quot;&#41;        writeln&#40;list&#41;;
+    else if&#40;input == &quot;welcome\n&quot; || input == &quot;w\n&quot;&#41;     writeln&#40;welcome&#41;;
+    else try {
+        writeln&#40;&quot;\t&quot;, parser.doString&#40;input.idup&#41;&#41;;
+    }
+    catch&#40;Exception e&#41; {
+        writeln&#40;&quot;\t&quot;, e&#41;;
+    }
+    write&#40;prompt&#41;;
+}
+</code></pre><p></div></div></p><p>Short yet ugly. First, it creates a list of aviable symbols in the environment... Using three different functions. Next, it checks for prompt assignment, cause that's a must-have feature. (Yeah, I'll be like "no man, I had nothing to do with this crap, nu'uh" all the time.) Next, it searches for some REPL commands and evaluates them if neccessary. (Oh man, it could have been written so much better... An <a href='http://en.wikipedia.org/wiki/Association_list'>alist</a> of <a href='http://en.wikipedia.org/wiki/Thunk_%28programming%29'>thunks</a> for instance.) After that, there has to be an actual piece of latmab code to be evaluated, and so it evaluates it using the Parser instance (sooo modular, it does parsing, evaluating, and it keeps track of the environment). It uses the try-catch block, since the parser throws up on chunks of malformed code, such as syntacticly incorrect code.</p><p>Now let's have a look under the hood, a very short though, because it's a pretty boring piece of software:</p><p>First of all, the grammar - latmab uses no grammar, just some obvious regexps:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ Regular Exressions
+ RegExps used in this parser.
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+const string space              =   &quot;&#91;\\t\\r\\n &#93;+&quot;;                        //Anything between 1 .. &#42; whitespaces.
+
+const string digit              =   &quot;&#91;0-9&#93;&quot;;                                //Decimal digits.
+const string integerLiteral     =   &quot;-?&quot;&#126;digit&#126;&quot;+&quot;;
+const string realLiteral        =   integerLiteral&#126;&quot;\\.&quot;&#126;digit&#126;&quot;+&quot;;
+const string numberLiteral      =   &quot;&#40;&quot;&#126;realLiteral&#126;&quot;|&quot;&#126;integerLiteral&#126;&quot;&#41;&quot;;
+
+const string alnum              =   &quot;&#91;a-zA-Z0-9&#95;&#93;&quot;;                         //Alphanumeric characters.
+const string identifier         =   &quot;&#91;a-zA-Z&#95;&#93;&quot;&#126;alnum&#126;&quot;&#42;&quot;;                  //Can't start with a digit.
+const string rvalue             =   &quot;&#40;&quot;&#126;identifier&#126;&quot;|&quot;&#126;numberLiteral&#126;&quot;&#41;&quot;;
+const string lvalue             =   identifier;
+
+                                                                            //Builtin operators.
+const string binaryOp           =   &quot;&#40;!=|==|&gt;=|&lt;=|\\&#42;=|\\/=|\\+=|\\-=|&#91;\\&#94;\\&#42;\\/\\%\\+\\-\\=\\&gt;\\&lt;\\,&#93;&#41;&quot;;
+
+const string statementSeparator =   &quot;;&quot;;                                    //Various special characters.
+const string tokenSeparator     =   &quot; &quot;;
+const string lineStart          =   &quot;&#94;&quot;;
+const string lineEnd            =   &quot;$​&quot;;
+const string bracketStart       =   &quot;\\​&#40;&quot;;
+const string bracketEnd         =   &quot;\\​&#41;&quot;;
+
+const string all                =   &quot;&#40;&quot; &#126;space&#126;&quot;|&quot;
+                                        &#126;identifier&#126;&quot;|&quot;
+                                        &#126;numberLiteral&#126;&quot;|&quot;
+                                        &#126;binaryOp&#126;&quot;|&quot;
+                                        &#126;statementSeparator&#126;&quot;|&quot;
+                                        &#126;tokenSeparator&#126;&quot;|&quot;
+                                        &#126;bracketStart&#126;&quot;|&quot;
+                                        &#126;bracketEnd&#126;&quot;|&quot;
+                                        &#126;&quot;&#41;&quot;;
+</code></pre><p></div></div></p><p>In top-down order: whietespaces, number literals with all intermediate stages, symbols along with r/lvalues for improved readability later on, and the first design error - it treats binary operators as a separate entity from general symbols, what proved to cause much trouble in actual parsing. Next, there are some special symbols and a rarely used regexp for identifying unwanted characters.</p><p>This is how the grammar is represented in the AST:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">/&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;
+ Expression classes:
+ &#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;&#42;/
+
+abstract class Expression {
+    real eval&#40;&#41;;
+    real value&#40;&#41; {
+        return eval&#40;&#41;;
+    }
+}
+
+class Value : Expression {
+    private string name;
+
+    this&#40;string name&#41; {...}
+
+    real eval&#40;&#41; {...}
+}
+
+class NullValue : Expression {
+    real eval&#40;&#41; {
+        return LATNULL;
+    }
+}
+
+class BinaryOperator : Expression {
+    string name;
+    Expression lvalue = null;
+    Expression rvalue = null;
+
+    this&#40;string name, Expression l, Expression r&#41; {...}
+
+    real eval&#40;&#41; {
+        switch&#40;name&#41; {
+            case &quot;&#94;&quot;: return lvalue.eval &#94;&#94; rvalue.eval;
+            case &quot;&#42;&quot;: return lvalue.eval &#42; rvalue.eval;
+            case &quot;/&quot;: return lvalue.eval / rvalue.eval;
+            case &quot;%&quot;: return lvalue.eval % rvalue.eval;
+            case &quot;+&quot;: return lvalue.eval + rvalue.eval;
+            case &quot;-&quot;: return lvalue.eval - rvalue.eval;
+            case &quot;&gt;&quot;: return lvalue.eval &gt; rvalue.eval;
+
+            ...
+
+        }
+    }
+}
+
+alias real delegate&#40;Expression&#91;&#93; args&#41; functionDef;
+
+class FunctionCall : Expression {
+    functionDef func;
+    Expression&#91;&#93; args;
+
+    this&#40;Expression&#91;&#93; args, functionDef func&#41; {...}
+
+    real eval&#40;&#41; {
+        return func&#40;args.reverse&#41;;
+    }
+}
+</code></pre><p></div></div></p><p>Going top to down there is: abstract Expression - a base for AST classes, Value - an atom - either a number or a symbol, <code>NullValue</code> (actually <code>NaN</code>, since latmabs only datatype is 'real'). And here be dragons... <code>BinaryOperator</code> class is just a missunderstanding, seriously, who wrote that piece of-</p><p>Next, we have something that I actually like. (Ah forget it. Allright, I did write this thing. In the other news this whole program took me only a single evening with no refactoring ever made.) The <code>FunctionCall</code> class uses a ready-made implememnation of a function and evaluates it using args passed from the latmab code. It uses <code>funcionDef</code> type, which is an alias to a delegate - D's <a href='http://en.wikipedia.org/wiki/Closure_%28computer_science%29'>closure</a>, for the function definition. It features lazy evaluation, since the arguments are passed in an array to the builtin function as-is and then get evaluated in their implementation if needed.</p><p>The <code>FunctionCall</code> class allows for quite a few cool things, such as this:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">parser.add&#40;&quot;sq&quot;, 1, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        return args&#91; 0&#93;.value&#94;&#94;2;
+                    }&#41;;
+parser.add&#40;&quot;pow&quot;, 2, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        return args&#91; 1&#93;.value&#94;&#94;&#40;args&#91; 0&#93;.value&#41;;
+                    }&#41;;
+parser.add&#40;&quot;sqrt&quot;, 1, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        return args&#91; 0&#93;.value&#94;&#94;&#40;1./2.&#41;;
+                    }&#41;;
+parser.add&#40;&quot;root&quot;, 2, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        return args&#91; 1&#93;.value&#94;&#94;&#40;1./args&#91; 0&#93;.value&#41;;
+                    }&#41;;
+</code></pre><p></div></div></p><p>And this:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">parser.add&#40;&quot;if&quot;, 3, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        if&#40;args&#91; 0&#93;.value&#41; args&#91; 1&#93;.eval;
+                        else args&#91; 2&#93;.eval;
+                        return LATNULL;
+                    }&#41;;
+parser.add&#40;&quot;for&quot;, 4, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        args&#91; 0&#93;.eval;
+                        while&#40;args&#91; 1&#93;.value&#41; {
+                            args&#91; 3&#93;.eval;
+                            args&#91; 2&#93;.eval;
+                        }
+                        return LATNULL;
+                    }&#41;;
+</code></pre><p></div></div></p><p>AAAND even that:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="d">parser.add&#40;&quot;helloWorld&quot;, 1, delegate real &#40;Arg&#91;&#93; args&#41; {
+                        writeln&#40;&quot;Oh hi &quot;, parser.getGlobalScope&#41;;
+                        return LATNULL;
+                    }&#41;;
+</code></pre><p></div></div></p><p>In the first chunk we add some simple oneliners, nothing special. In the second one though we have something interresting: Thanks to the lazy evaluation it's possible to implement both conditionals and loops. Latmab turns out to be a not-quite-there-yet-but-going-steadly programming language. At the time I was implementing this feature I didn't realise how cool could that have been, so a few terrible design decisions later it was too late to benefit from that. (Allright, I was too lazy to rewrite it. Fine. Guilty as charged). The third chunk uses the advantage of delegates in D - it prints the current list of the latmab global variables using D variable from the outter scope - an instance of the parser itself. The rest of the code is rather boring, so I'll skip it, just some simple regexp based tokenization and RPN. Nothing new there, you can download it and see for yourself.</p><p>Long story short, I ended up having a global variable scope, a global function scope, a builtin operators scope and not too complicated syntax, but due to some not so clever ideas latmab was at its peak although it wouldn't go anywhere. It's worthy to note here that it was my first project of this kind. Refactoring was badly needed, but I, beeing a lazy ass I am, didn't do it. Instead I've created a fodder for the next blog entry...</p><p>Lastly, a test-drive from the latest latmab version:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="clojure-repl">Latmab v13.03.11 Copyright &#40;C&#41; 2011 Kajetan Rzepecki nope.nope@nope.nope
+This program comes with ABSOLUTELY NO WARRANTY; for details see README.txt.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see README.txt for details.
+Type 'help' for help.
+
+&gt; PI
+        3.14159
+&gt; 2 &#94; &#40;2 + erf&#40;E&#41;&#41;
+        7.99933
+&gt; list
+Available operations: &#91;%, &#42;, &#42;=, +, +=, ,, -, -=, /, /=, =, &#94;, &lt;, &lt;=, &gt;, &gt;=, ==, !=&#93;.
+Available variables:  &#91;E, LN10, LN2, LOG2E, PI, PI2, PI4&#93;.
+Available functions:  &#91;abs, cos, ctg, do, erf, exp, fact, for, gamma, helloWorld, if, log, log10, log2, pow, rand, root, sin, sq, sqrt, tan, while, write&#93;.
+
+&gt; quit
+</code></pre><p></div></div></p><p><strong>2016-02-20</strong>: Adjusted some links & tags.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/mixins-make-sense.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Mixins make sense</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="next"><a href="../entries/_car-__2-3__.html"><span class="entry-title">(car '(2 3))</span><i class="fa fa-chevron-right" style="margin-left: 5px;"></i></a></li></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
