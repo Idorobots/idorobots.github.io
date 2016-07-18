@@ -1,0 +1,116 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Using a Rule-based System for type inference.</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title="Using a Rule-based System for type inference. Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v.1.3.2" name="generator" /><meta content="Idorobots" name="author" /><meta content="Kajetan Rzepecki, Idorobots, dev-blog, devblog, blog, Clojure, Lisp, Erlang, technology, electronics, hacks, computer science" name="keywords" /><meta content="Yes Mom, I *do* robots." name="description" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>Using a Rule-based System for type inference.</h1><p>Posted on <time>2016-07-18 20:23</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/lisp.html"><span class="label label-info small">Lisp</span></a> <a class="tag" href="../tags/prolog.html"><span class="label label-info small">Prolog</span></a> <a class="tag" href="../tags/rbs.html"><span class="label label-info small">RBS</span></a> <a class="tag" href="../tags/rete.html"><span class="label label-info small">Rete</span></a> <a class="tag" href="../tags/scheme.html"><span class="label label-info small">Scheme</span></a> <a class="tag" href="../tags/logic-programming.html"><span class="label label-info small">logic programming</span></a> <a class="tag" href="../tags/rules.html"><span class="label label-info small">rules</span></a> <a class="tag" href="../tags/type-reconstruction.html"><span class="label label-info small">type reconstruction</span></a> <a class="tag" href="../tags/type-systems.html"><span class="label label-info small">type systems</span></a></nav></div></div></div></header><p>Recently, I came across <a href='http://code.alehander42.me/prolog_type_systems'>this post</a> about implementing custom type systems using Prolog and it inspired me to revisit an old logic-programming-related project of mine.</p><p>About a year and a half ago I took a shot at using Prolog for type reconstruction (a.k.a. <strong>type inference</strong>), but that resulted in a load of <em>not much</em> for one reason or another. I did write <a href='https://github.com/Idorobots/rules'>this Rule-based system</a> shortly thereafter, however I did not give much thought to using it for type reconstruction. Let's change it...</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;assert! &#40;: map &#40;-&gt; &#40;&#40;-&gt; &#40;?a&#41; ?b&#41; &#40;list ?a&#41;&#41; &#40;list ?b&#41;&#41;&#41;&#41;
+</code></pre><p></div></div> <a name="preview-more"></a><h2><a name="rule-based-systems"></a><a href="#rule-based-systems">Rule-based Systems</a></h2></p><p>...but first some theory. A <a href='https://en.wikipedia.org/wiki/Rule-based_system'>Rule-based System</a>, or <strong>RBS</strong> for short, is a way of organizing and processing <em>knowledge</em> - any statement of fact about the domain you're modeling. As the name implies, RBSes use <em>rules</em> to modify a <em>knowledge base</em> consisting of <em>facts</em>. For the purpose of this post, a <em>rule</em> has the following form:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;whenever condition action&#41;
+</code></pre><p></div></div></p><p>That is, <em>whenever</em> a certain <em>condition</em> is met, an <em>action</em> will be performed. That's not very novel, it's just a function with some pattern matching. The clever bit is the fact, that rules are <em>triggered</em> by changes to the knowledge base, which they can themselves modify by <em>asserting</em> and <em>retracting</em> facts. Here's a rule that makes some true assertions about functions in the Scheme programming language (this is actual code):</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;whenever &#40;and &#40;language-of ?f Scheme&#41;
+               &#40;is-a ?f function&#41;&#41;
+  &#40;?f&#41; =&gt; &#40;assert!&#42; `&#40;: ,?f &#40;-&gt; ?anything ?anything-else&#41;&#41;&#41;&#41;
+
+&#40;assert! &#40;is-a factorial function&#41;&#41;
+&#40;assert! &#40;is-a map function&#41;&#41;
+
+;; factorial is now typed! Kind of...
+&#40;assert! &#40;language-of factorial Scheme&#41;&#41;
+</code></pre><p></div></div></p><p>So, what's the difference between Prolog and RBSes? Mostly, the <em>direction</em> of logic inference - in Prolog you usually assert some facts and then query the knowledge base to find relations between them. This is called <a href='https://en.wikipedia.org/wiki/Backward_chaining'>backward-chaining</a> because the inference engine takes a look back at the data it already has:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="prolog">mother&#40;alice, bob&#41;.
+
+father&#40;chad, bob&#41;.
+father&#40;chad, daryl&#41;.
+father&#40;daryl, alice&#41;. % ¯\&#95;&#40;ツ&#41;&#95;/¯
+
+parent&#40;X, Y&#41; :- father&#40;X, Y&#41;; mother&#40;X, Y&#41;.
+sibling&#40;X, Y&#41; :- parent&#40;Z, X&#41;, parent&#40;Z, Y&#41;, X \= Y.
+
+?- sibling&#40;bob, X&#41;. % daryl
+</code></pre><p></div></div></p><p>Rule-based Systems, however, use a different approach called <a href='https://en.wikipedia.org/wiki/Forward_chaining'>forward-chaining</a> where logic inference is performed live, going forward, whenever any new knowledge is available.</p><p>Of course, backward-chaining is more suitable for building <a href='https://en.wikipedia.org/wiki/Automated_theorem_prover'>automatic theorem provers</a>, such as type reconstruction engines, because that's pretty much what it does - it proves theorems given some initial conditions. This doesn't necessarily mean that RBSes are utterly useless in this matter. The cool thing about <a href='https://en.wikipedia.org/wiki/Rete_algorithm'>the algorithm</a> I used in my RBS implementation is that it can be slightly modified to <em>emulate</em> backward-chaining in addition to its normal forward-chaining operation - all you need to do is run a rule in a fresh environment giving it all currently known facts as inputs, which isn't as bad as it sounds. <a href='https://www.youtube.com/watch?v=rp8hvyjZWHs'>Trust me.</a></p><p>You can query the knowledge base in my RBS by invoking <code>select</code>. For instance, to get all Scheme function from the previous example try this:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;select &#40;?f&#41;
+        &#40;and &#40;is-a ?f function&#41;
+             &#40;language-of ?f Scheme&#41;&#41;&#41;
+</code></pre><p></div></div></p><h2><a name="rbs-based-type-inference"></a><a href="#rbs-based-type-inference">RBS-based type inference</a></h2><p>So, let's infer a type for the <em>factorial</em> function defined as follows:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;fact n&#41;
+  &#40;if &#40;= n 0&#41;
+      1
+      &#40;&#42; n &#40;fact &#40;- n 1&#41;&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>Let's assume that we know a thing or two about the types of the built-in functions used by <code>fact</code>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;assert! &#40;: = &#40;-&gt; &#40;?any ?any&#41; bool&#41;&#41;&#41;
+&#40;assert! &#40;: - &#40;-&gt; &#40;int int&#41; int&#41;&#41;&#41;
+&#40;assert! &#40;: &#42; &#40;-&gt; &#40;int int&#41; int&#41;&#41;&#41;
+&#40;assert! &#40;: if &#40;-&gt; &#40;bool ?t ?t&#41; ?t&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>Now, inferring the correct type given this knowledge amounts to constructing a clever knowledge base query:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2"></p><pre><code class="scheme">&#40;assert! &#40;: fact &#40;-&gt; &#40;?n&#41; ?fact&#41;&#41;&#41; ;; Assume fact is a function.
+&#40;assert! &#40;: n ?n&#41;&#41;                 ;; Assume fact's argument has a type.
+
+&#40;select &#40;?type&#41;
+        &#40;and &#40;: = &#40;-&gt; &#40;?n int&#41; ?eq&#41;&#41;           ;; &#40;= n 0&#41;
+             &#40;: - &#40;-&gt; &#40;?n int&#41; ?n&#41;&#41;            ;; &#40;- n 1&#41; - passed to fact.
+             &#40;: &#42; &#40;-&gt; &#40;?n ?fact&#41; ?mult&#41;&#41;       ;; &#40;&#42; n fact-result&#41;
+             &#40;: if &#40;-&gt; &#40;?eq int ?mult&#41; ?fact&#41;&#41; ;; &#40;if ...&#41; - returned as the result.
+             &#40;: fact ?type&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>It properly reports a type of <code>&#40;-&gt; &#40;int&#41; int&#41;</code>, namely a function of one parameter of integer type returning a value of integer type. Here's a somewhat more involved example, the <code>my-map</code> function:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;my-map f l&#41;
+  &#40;if &#40;null? l&#41;
+      null
+      &#40;cons &#40;f &#40;car l&#41;&#41;
+            &#40;my-map f &#40;cdr l&#41;&#41;&#41;&#41;&#41;
+
+;; Some prior knowledge of the builtin functions:
+&#40;assert! &#40;: null? &#40;-&gt; &#40;&#40;list ?a&#41;&#41; bool&#41;&#41;&#41;
+&#40;assert! &#40;: car &#40;-&gt; &#40;&#40;list ?b&#41;&#41; ?b&#41;&#41;&#41;
+&#40;assert! &#40;: cdr &#40;-&gt; &#40;&#40;list ?c&#41;&#41; &#40;list ?c&#41;&#41;&#41;&#41;
+&#40;assert! &#40;: cons &#40;-&gt; &#40;?d &#40;list ?d&#41;&#41; &#40;list ?d&#41;&#41;&#41;&#41;
+&#40;assert! &#40;: null &#40;list ?e&#41;&#41;&#41;
+
+;; Some assumptions as before:
+&#40;assert! &#40;: my-map &#40;-&gt; &#40;?f ?l&#41; ?my-map&#41;&#41;&#41;
+&#40;assert! &#40;: f ?f&#41;&#41;
+&#40;assert! &#40;: l ?l&#41;&#41;
+
+&#40;select &#40;?type&#41;
+        &#40;and &#40;: null? &#40;-&gt; &#40;?l&#41; ?null?&#41;&#41;
+             &#40;: null ?null&#41;
+             &#40;: f &#40;-&gt; &#40;?fa&#41; ?fb&#41;&#41;
+             &#40;: car &#40;-&gt; &#40;?l&#41; ?fa&#41;&#41;
+             &#40;: cdr &#40;-&gt; &#40;?l&#41; ?l&#41;&#41;
+             &#40;: cons &#40;-&gt; &#40;?fb ?my-map&#41; ?cons&#41;&#41;
+             &#40;: if &#40;-&gt; &#40;?null? ?null ?cons&#41; ?my-map&#41;&#41;
+             &#40;: my-map ?type&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>This time it reports a type of <code>&#40;-&gt; &#40;&#40;-&gt; &#40;?c&#41; ?e&#41; &#40;list ?c&#41;&#41; &#40;list ?e&#41;&#41;</code>, that is: a function taking two parameters, the first one being a function from a, uh, <em>logical variable</em> <code>?c</code> to a logical variable <code>?e</code> and the second being a list of <code>?c</code>'s, that returns a list of, uh, <code>?e</code>'s...</p><p><div class="text-center"> ¯&#92;&#95;(ツ)&#95;/¯ </div></p><p>This is significant, because we just inferred a <strong>generic type</strong> for a function - <code>my-map</code> doesn't care about specific types of its arguments as long as they are consistent. This is a feature that can be found in Standard ML among others.</p><p>So, you could in principle use a Rule-based System to perform type reconstruction, but... Why would you do that anyway, when you have Prolog available? Enter forward-chaining, or in this case, <strong>interactive, incremental typing</strong>:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2"></p><pre><code class="scheme">;; What's the type of result?
+&#40;define int-list &#40;list 1 2 3 4 5&#41;&#41;
+&#40;define result &#40;my-map fact int-list&#41;&#41;
+
+&#40;whenever &#40;and &#40;: fact ?f&#41;
+               &#40;: int-list ?l&#41;
+               &#40;: my-map &#40;-&gt; &#40;?f ?l&#41; ?result&#41;&#41;&#41;
+          &#40;?result&#41; =&gt;
+          &#40;display &quot;Finally got all the info to infer the type of result!&quot;&#41;
+          &#40;assert!&#42; `&#40;: result ,?result&#41;&#41;&#41;
+
+&#40;assert! &#40;: fact &#40;-&gt; &#40;int&#41; int&#41;&#41;&#41;                            ;; Not enough knowledge.
+&#40;assert! &#40;: my-map &#40;-&gt; &#40;&#40;-&gt; &#40;?a&#41; ?b&#41; &#40;list ?a&#41;&#41; &#40;list ?b&#41;&#41;&#41;&#41; ;; Still nope.
+&#40;assert! &#40;: int-list &#40;list int&#41;&#41;&#41;                            ;; Now we're talking!
+</code></pre><p></div></div></p><p>Here we infer the type of <code>result</code> as soon as we infer the types of all its dependencies (in this case, <code>my-map</code>, <code>fact</code> and <code>int-list</code>). I could see this used in an implementation of a incremental, interactive compiler allowing for tight integration with an IDE. Think <a href='http://ensime.github.io/'>Ensime-type deal</a>.</p><p>Still not convinced? Well you know, you still have access to all the usual RBS perks in addition to the type system - be in <em>event programming</em>, decision making or plain-old knowledge mining. For instance, here's a rule that automatically registers callbacks whenever a function with a suitable type is found:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#42;loggers&#42; &#40;ref '&#40;&#41;&#41;&#41;
+
+&#40;define &#40;register-callback! callback&#41;
+  &#40;assign! &#42;loggers&#42; &#40;cons callback &#40;deref &#42;loggers&#42;&#41;&#41;&#41;&#41;
+
+&#40;define &#40;log str&#41;
+  &#40;map &#40;lambda &#40;f&#41; &#40;f str&#41;&#41;
+       &#40;deref &#42;loggers&#42;&#41;&#41;&#41;
+
+&#40;whenever &#40;: ?function &#40;-&gt; &#40;string&#41; unit&#41;&#41;
+          &#40;?function&#41; =&gt;
+          &#40;display &quot;Found a suitable logger!&quot;&#41; &#40;newline&#41;
+          &#40;register-callback! ?function&#41;&#41;
+
+;; ...elswhere in the code:
+
+&#40;log &quot;Hello world!&quot;&#41; ;; Nothing happens.
+
+&#40;define &#40;simple-logger str&#41;
+  &#40;display &quot;&#91;LOG&#93; &quot;&#41;
+  &#40;display str&#41;
+  &#40;newline&#41;&#41;
+
+&#40;assert!&#42; `&#40;: ,simple-logger &#40;-&gt; &#40;string&#41; unit&#41;&#41;&#41;
+
+&#40;log &quot;Hello world!&quot;&#41; ;; Simple logger runs.
+
+&#40;define &#40;logstash-logger str&#41;
+  &#40;send-to-logstash str&#41;&#41;
+
+&#40;assert!&#42; `&#40;: ,logstash-logger &#40;-&gt; &#40;string&#41; unit&#41;&#41;&#41;
+
+&#40;log &quot;Hello world!&quot;&#41; ;; Both loggers run.
+</code></pre><p></div></div></p><p>Pretty neat!</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/upnod-2_-the-reset-circuit..html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">UPNOD 2: The reset circuit.</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
