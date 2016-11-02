@@ -1,0 +1,217 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Promise as a basic language feature</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title="Promise as a basic language feature Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v.1.3.2" name="generator" /><meta content="Idorobots" name="author" /><meta content="Kajetan Rzepecki, Idorobots, dev-blog, devblog, blog, Clojure, Lisp, Erlang, technology, electronics, hacks, computer science" name="keywords" /><meta content="Yes Mom, I *do* robots." name="description" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>Promise as a basic language feature</h1><p>Posted on <time>2016-11-02 00:23</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/actor-model.html"><span class="label label-info small">Actor Model</span></a> <a class="tag" href="../tags/cps.html"><span class="label label-info small">CPS</span></a> <a class="tag" href="../tags/lisp.html"><span class="label label-info small">Lisp</span></a> <a class="tag" href="../tags/promise.html"><span class="label label-info small">Promise</span></a> <a class="tag" href="../tags/scheme.html"><span class="label label-info small">Scheme</span></a> <a class="tag" href="../tags/benchmarks.html"><span class="label label-info small">benchmarks</span></a> <a class="tag" href="../tags/language-features.html"><span class="label label-info small">language features</span></a></nav></div></div></div></header><p>Just the other day, while programming in Scala, I was thinking how nice it is that Haskell hides non-strictness (a.k.a. laziness) underneath, so no obnoxious lazy stream creation/forcing needs to be done. And then it struck me: how cool would it be to treat Promises in a language the same way that Haskell treats lazy values? Would such a language even make sense? How would you program in such a language?</p><p>Let's explore! You can find all the code included in this post in a more useful form <a href='https://github.com/Idorobots/promise-based-lang'>here</a>.</p><h2><a name="promise"></a><a href="#promise">Promise</a></h2>Here's a very simple <code>Promise</code> implementation written in Scheme, with support for asynchronous resolving & error rejection, which we'll need in order to explore this weird proposition:<p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#42;promises&#42; '&#40;&#41;&#41;
+
+&#40;define &#40;make-promise value state then handle thunk&#41;
+  &#40;list '&amp;promise value state then handle thunk&#41;&#41;
+
+;; Field accessors omitted.
+
+&#40;define &#40;promise fun&#41;
+  &#40;let&#42; &#40;&#40;val '&#40;&#41;&#41;
+         &#40;state 'pending&#41;
+         &#40;on-resolve id&#41;
+         &#40;on-reject id&#41;
+         &#40;resolve &#40;lambda &#40;v&#41;
+                    &#40;set! val v&#41;
+                    &#40;set! state 'resolved&#41;
+                    &#40;on-resolve val&#41;&#41;&#41;
+         &#40;reject &#40;lambda &#40;e&#41;
+                   &#40;set! val e&#41;
+                   &#40;set! state 'rejected&#41;
+                   &#40;on-reject val&#41;&#41;&#41;
+         &#40;then &#40;lambda &#40;t&#41;
+                 &#40;if &#40;equal? state 'resolved&#41;
+                     &#40;t val&#41;
+                     &#40;set! on-resolve t&#41;&#41;&#41;&#41;
+         &#40;handle &#40;lambda &#40;h&#41;
+                   &#40;if &#40;equal? state 'rejected&#41;
+                       &#40;h val&#41;
+                       &#40;set! on-reject h&#41;&#41;&#41;&#41;
+         &#40;p &#40;make-promise &#40;lambda &#40;&#41; val&#41;
+                          &#40;lambda &#40;&#41; state&#41;
+                          then
+                          handle
+                          &#40;lambda &#40;&#41; &#40;fun resolve reject&#41;&#41;&#41;&#41;&#41;
+    &#40;set! &#42;promises&#42; &#40;cons p &#42;promises&#42;&#41;&#41;
+    p&#41;&#41;
+</code></pre><p></div></div> <a name="preview-more"></a> A promise created with <code>promise</code> function is just a list of several getters/setters for different values - the <code>value</code> this promise will eventually resolve to, the <code>state</code> of the promise (either <code>pending</code>, <code>resolved</code> or <code>rejected</code>), two callbacks <code>then</code> and <code>handle</code> that will be called on state transitions and the actual, captured computation <code>thunk</code>. The <code>thunk</code> <strong>is</strong> the meat of the thing; the chunk of computation this promise represents.</p><p>To actually use these promises we need two more functions - <code>then</code> which will allow us to perform certain tasks when the promise resolves, and <code>handle</code> which will facilitate error recovery if anything goes wrong:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;then p fun&#41;
+  &#40;promise &#40;lambda &#40;resolve reject&#41;
+             &#40;&#40;promise-handle p&#41; reject&#41;
+             &#40;&#40;promise-then p&#41; &#40;lambda &#40;val&#41;
+                                 &#40;resolve &#40;fun val&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+
+&#40;define &#40;handle p handler&#41;
+  &#40;promise &#40;lambda &#40;resolve &#95;&#41;
+             &#40;&#40;promise-handle p&#41; &#40;lambda &#40;error&#41;
+                                   &#40;resolve &#40;handler error&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>Both of these conceptually create a new promise which will resolve to the value of the original promise mapped by the function passed in the second argument.</p><p>Let's add a way to actually run the <code>thunk</code>'s until everything is resolved:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;run! p&#41;
+  &#40;&#40;promise-thunk p&#41;&#41;&#41;
+
+&#40;define &#40;run-all!&#41;
+  &#40;let &#40;&#40;ps &#42;promises&#42;&#41;&#41;
+    &#40;set! &#42;promises&#42; '&#40;&#41;&#41;
+    &#40;map run! ps&#41;
+    &#40;unless &#40;equal? &#42;promises&#42; '&#40;&#41;&#41;
+      &#40;run-all!&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p><code>run!</code> and <code>run-all!</code> take care of traversing the list of currently defined <code>&#42;promises&#42;</code> and executing their corresponding <code>thunks</code>. It's worth mentioning, that during the execution of a <code>thunk</code> more promises can be created, so <code>run-all!</code> has to loop until no more promises need to be run.</p><p>With these functions defined we're nearly set, but in order to build wrappers for primitive values & operations we need one last function - a way to <em>bind</em> promises to one another:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-8 col-lg-offset-2"></p><pre><code class="scheme">&#40;define &#40;&gt;&gt;= p0 fun&#41;
+  &#40;promise &#40;lambda &#40;resolve reject&#41;
+             &#40;&#40;promise-handle p0&#41; reject&#41;
+             &#40;&#40;promise-then p0&#41; &#40;lambda &#40;val&#41;
+                                  &#40;let &#40;&#40;p1 &#40;fun val&#41;&#41;&#41;
+                                    &#40;&#40;promise-handle p1&#41; reject&#41;
+                                    &#40;&#40;promise-then p1&#41; resolve&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>Binding promises allows us to replace the value of one promise with another promise in a seamless way, without the need for recursive traversal or anything like that. Some implementations actually combine <code>&gt;&gt;=</code> and <code>then</code> for brevity, but that's not a concern for us, since all this crap will be hidden in the language itself. This is how we define primitive operators:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;primop op&#41;
+  &#40;lambda &#40;a b&#41;
+    &#40;&gt;&gt;= a &#40;lambda &#40;a&#41;
+             &#40;then b &#40;lambda &#40;b&#41;
+                       &#40;op a b&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+&#40;define &amp;equal? &#40;primop equal?&#41;&#41;
+&#40;define &amp;&#42; &#40;primop &#42;&#41;&#41;
+&#40;define &amp;- &#40;primop -&#41;&#41;
+&#40;define &amp;+ &#40;primop +&#41;&#41;
+&#40;define &amp;&lt;= &#40;primop &lt;=&#41;&#41;
+
+&#40;define &#40;&amp; value&#41; ;; Wraps each native value in a resolved promise.
+  &#40;make-promise &#40;lambda &#40;&#41; value&#41;
+                &#40;lambda &#40;&#41; 'resolved&#41;
+                &#40;lambda &#40;t&#41; &#40;t value&#41;&#41;
+                &#40;lambda &#40;h&#41; value&#41;
+                &#40;lambda &#40;&#41; value&#41;&#41;&#41;
+
+&#40;define-syntax &amp;if
+  &#40;syntax-rules &#40;&#41;
+    &#40;&#40;&amp;if c t e&#41;
+     &#40;&gt;&gt;= c &#40;lambda &#40;r&#41;
+              &#40;if r t e&#41;&#41;&#41;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>Now, that we have primitive values & operations figured out we can <em>finally</em> write some purely-asynchronous code - let's start with a function that computes factorial of a number:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;factorial n&#41;
+  &#40;&amp;if &#40;&amp;equal? n &#40;&amp; 0&#41;&#41;
+       &#40;&amp; 1&#41;
+       &#40;&amp;&#42; n &#40;factorial &#40;&amp;- n &#40;&amp; 1&#41;&#41;&#41;&#41;&#41;&#41;
+
+&#40;then &#40;factorial &#40;&amp; 20&#41;&#41;
+      &#40;lambda &#40;result&#41; &#40;display &quot;Success!&quot;&#41;&#41;&#41;
+
+&#40;run-all!&#41;
+</code></pre><p></div></div></p><p>There's nothing inherently asynchronous about this implementation of <code>factorial</code>, but one could imagine <code>&amp;equal?</code> performing arbitrary, asynchronous operations under the hood - for instance, it could send an email to a <a href='https://en.wikipedia.org/wiki/Social_justice_warrior'>privileged user</a> and resolve only when a response asserting equality with no hidden biases is received. We wouldn't know and the code would still look and work exactly the same, save for execution time. This actually is a pretty decent use case for a whole class of DB-talky, HTTP-sendy CRUD apps, which mostly consist of asynchronous operations of one kind or another. No special handling of promises needed.</p><p>Here's another example - error handling using promises:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;&amp;/ a b&#41;
+  &#40;&gt;&gt;= a &#40;lambda &#40;a&#41;
+           &#40;&gt;&gt;= b &#40;lambda &#40;b&#41;
+                    &#40;promise &#40;lambda &#40;resolve reject&#41;
+                               &#40;if &#40;equal? b 0&#41;
+                                   &#40;reject &quot;Can't divide by 0!&quot;&#41;
+                                   &#40;resolve &#40;/ a b&#41;&#41;&#41;&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+
+&#40;define &#40;&amp;catch value handler&#41;
+  &#40;&gt;&gt;= handler
+       &#40;lambda &#40;h&#41;
+         &#40;&gt;&gt;=-handle value
+                     &#40;lambda &#40;error&#41;
+                       &#40;h &#40;&amp; error&#41;&#41;&#41;&#41;&#41;&#41;&#41;
+
+&#40;handle &#40;then &#40;&amp;catch &#40;&amp;/ &#40;&amp; 10&#41; &#40;&amp; 0&#41;&#41;
+              &#40;&amp; &#40;lambda &#40;error&#41;
+                   &#40;&amp;/ &#40;&amp; 10&#41; &#40;&amp; 0.001&#41;&#41;&#41;&#41;&#41; ;; Close enough!
+              &#40;lambda &#40;result&#41; &#40;display &quot;Success!&quot;&#41;&#41;&#41;
+        &#40;lambda &#40;error&#41; &#40;display &quot;This will never print!!&quot;&#41;&#41;&#41;
+
+&#40;run-all!&#41;
+</code></pre><p></div></div></p><p>A primitive operation that found itself in a less than desirable state can simply... Not resolve and terminate via rejection. This rejection can be optionally handled elsewhere - in this case via <code>&amp;catch</code>. Admittedly though, implementing <code>&amp;catch</code> requires <code>&gt;&gt;=-handle</code> which is a binder analogous to <code>handle</code> in operation, except it takes a a function returning promise as its second argument, much like <code>&gt;&gt;=</code>.</p><p>Now let's focus on adding concurrency to the mix. Assuming atomic updates to <code>&#42;promises&#42;</code> and each promise individually we merely need to parallelize <code>run-all!</code>, and since each <code>thunk</code> is fairly self-contained this ought to be pretty easy. Moreover, since we're using asynchronous promises we don't need to worry at all about the order of execution! We just need to run all thunks in any order whatsoever and that's it:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;set! &#42;promises&#42; &#40;shuffle &#42;promises&#42;&#41;&#41; ;; Everything still works.
+&#40;run-all!&#41;
+</code></pre><p></div></div></p><p>It's worth mentioning that this implementation does not impose very many restrictions on the underlying concurrency model. There's nothing inherently binding promise execution strategy to the actual computation it conveys. All we need under the hood is a queue of promises awaiting execution and something that will execute them - for instance a <strong>thread pool</strong> would do nicely here and is fairly simple to implement.</p><p>So... Now that we have it laid out like this it really does look quite similar to how Haskell handles non-strictness and the concurrency perks are nice...</p><p>Wait a minute! Does this mean this weird idea is actually viable!?</p><h2><a name="cps"></a><a href="#cps">CPS</a></h2>Let's instead focus for a moment on an alternative approach to implementing concurrency in a programming language - the <a href='https://en.wikipedia.org/wiki/Actor_model'>Actor Model</a>. In Actor Model all concurrent computation is performed by so-called Actors - lightweight processes that synchronize themselves using message passing.<p>Implementing such a thing is quite a bit more complex than using a thread pool, especially if we aim to compile down to an Actor Model-based language. Fortunately enough, there's a clever technique that makes it a little bit easier - it's called <a href='https://en.wikipedia.org/wiki/Continuation-passing_style'>Continuation Passing Style</a> or <strong>CPS</strong> for short. CPS itself is quite straightforward - all you're really doing is calling another function instead of returning a value, but just as these things tend to turn out, it has some mind-boggling implications. For starters, sometimes it's really hard to understand what's going on in the code - and I mean <strong>really hard</strong> -, especially if some clever use of <em>continuations</em> is in progress. Another complex thing about CPS is the CPS-transform - a nontrivial task of converting direct-style (the <em>regular</em> kind) code into continuation passing style. For these reasons I won't dive too deep into the CPS, so let's assume we both read and understood bits of the wikipedia page on the topic, and let's see some spaghetti code. ( ͡° ͜ʖ ͡°)</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;cps-primop op&#41;
+  &#40;lambda &#40;a b cont handler&#41;
+    &#40;cont &#40;op a b&#41;&#41;&#41;&#41;
+
+&#40;define &#94;equal? &#40;cps-primop equal?&#41;&#41;
+&#40;define &#94;&#42; &#40;cps-primop &#42;&#41;&#41;
+&#40;define &#94;- &#40;cps-primop -&#41;&#41;
+&#40;define &#94;+ &#40;cps-primop +&#41;&#41;
+&#40;define &#94;&lt;= &#40;cps-primop &lt;=&#41;&#41;
+
+&#40;define &#40;fact-cps n cont handler&#41;
+  &#40;&#94;equal? n 0
+           &#40;lambda &#40;comp&#41;
+             &#40;if comp
+                 &#40;cont 1&#41;
+                 &#40;&#94;- n
+                     1
+                     &#40;lambda &#40;sub&#41;
+                       &#40;fact-cps sub
+                                 &#40;lambda &#40;fact&#41;
+                                   &#40;&#94;&#42; n
+                                       fact
+                                       cont
+                                       handler&#41;&#41;
+                                 handler&#41;&#41;
+                     handler&#41;&#41;&#41;
+           handler&#41;&#41;
+
+&#40;fact-cps 20
+          &#40;lambda &#40;result&#41; &#40;display &quot;Success!&quot;&#41;&#41;
+          &#40;lambda &#40;error&#41; &#40;display &quot;ERROR!&quot;&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>This is a CPS version of a <code>factorial</code> function along with a couple of primitive operations wrappers. Noticeably, in CPS there's no need to wrap any values in anything, we just use their... Well, <em>values</em>. The second obvious thing is the <em>similarity</em> to using Promises - what we have here is two callbacks, one resolving and the other rejecting a value, ordered in such a way that running one <code>resolve</code> cascades and recursively resolves more promises. Pretty clever. On the other hand, error handling is not clever at all - all we need to do in order to install a new error handler is... Well, just pass a different one along, that's it. Language-wise, this requires CPS-transform support, but conceptually beats <code>&amp;catch</code> any time.</p><p>Unfortunately, we can't do anything <em>fun</em> with this <code>factorial</code>, since it just executes until completion. If we were to run one inside of an actor - it would hog the entire processor core, preventing any other actors from running on it. Needlessly to say, this is undesirable and we need to fix it. Fortunately, the fix for this is quite simple - we'll voluntarily yield execution and let the runtime decide which continuation to run next:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#42;continuation&#42; '&#40;&#41;&#41;
+
+&#40;define &#40;%yield val cont handler&#41;
+  &#40;set! &#42;continuation&#42; &#40;list val cont handler&#41;&#41;&#41;
+
+&#40;define &#40;cps-yield-primop op&#41;
+  &#40;lambda &#40;a b cont handler&#41;
+    &#40;%yield &#40;op a b&#41; cont handler&#41;&#41;&#41;
+
+&#40;define %equal? &#40;cps-yield-primop equal?&#41;&#41;
+&#40;define %&#42; &#40;cps-yield-primop &#42;&#41;&#41;
+&#40;define %- &#40;cps-yield-primop -&#41;&#41;
+&#40;define %+ &#40;cps-yield-primop +&#41;&#41;
+&#40;define %&lt;= &#40;cps-yield-primop &lt;=&#41;&#41;
+
+&#40;define &#40;fact-cps-yield n cont handler&#41;
+  &#40;%equal? n 0
+           &#40;lambda &#40;comp&#41;
+             &#40;if comp
+                 &#40;%yield 1 cont handler&#41;
+                 &#40;%- n
+                     1
+                     &#40;lambda &#40;sub&#41;
+                       &#40;fact-cps-yield sub
+                                       &#40;lambda &#40;fact&#41;
+                                         &#40;%&#42; n
+                                             fact
+                                             cont
+                                             handler&#41;&#41;
+                                       handler&#41;&#41;
+                     handler&#41;&#41;&#41;
+           handler&#41;&#41;
+</code></pre><p></div></div></p><p>Our new version of <code>factorial</code> is pretty much identical to the previous one, save for the <code>%yield</code> call in the <code>then</code> branch of the <code>if</code> expression. What changed however is the fact that all primitive operations now <code>%yield</code> execution by default and we store the previously yielded continuation - in a manner similar to storing a promise for later execution.</p><p>In order to execute this <code>factorial</code> function, we need something to step through the yielded chain of continuations and another function that will schedule a chunk of computation for execution:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;define &#40;step! cont&#41;
+  &#40;&#40;cadr cont&#41; &#40;car cont&#41;&#41;&#41;
+
+&#40;define &#40;step-all!&#41;
+  &#40;unless &#40;equal? &#42;continuation&#42; '&#40;&#41;&#41;
+    &#40;let &#40;&#40;c &#42;continuation&#42;&#41;&#41;
+      &#40;set! &#42;continuation&#42; '&#40;&#41;&#41;
+      &#40;step! c&#41;
+      &#40;step-all!&#41;&#41;&#41;&#41;
+
+&#40;define &#40;schedule thunk&#41;
+  &#40;%yield 23
+          &#40;lambda &#40;&#95;&#41;
+            &#40;thunk&#41;&#41;
+          &#40;lambda &#40;e&#41; e&#41;&#41;&#41;
+</code></pre><p></div></div></p><p>We can schedule a call to <code>factorial</code> like this:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="scheme">&#40;schedule &#40;lambda &#40;&#41;
+            &#40;fact-cps-yield 20
+                            &#40;lambda &#40;result&#41; &#40;display &quot;Success!&quot;&#41;&#41;
+                            &#40;lambda &#40;error&#41; &#40;display &quot;ERROR!&quot;&#41;&#41;&#41;&#41;&#41;
+&#40;step-all!&#41;
+</code></pre><p></div></div></p><p>In terms of concurrency, we could store several such continuations and step through them arbitrarily, yielding execution at each step and swapping for another continuation if need be. This works especially well with the Actor Model, where we already have a perfect place to store such a continuation (the actor itself), plus an actor already represents an on-going process, which an unterminated continuation is.</p><p>Asynchronity is achievable on inter-continuation level. What I mean by that is, basically, that we can spin up a new actor or a few new actors that will perform asynchronous computations and return results whenever available. It's not as sexy as Promises, but if it's good enough for Erlang, then it's definitely good enough for me.</p><h2><a name="conclusions-_-benchmark"></a><a href="#conclusions-_-benchmark">Conclusions & benchmark</a></h2>Now, back to the viability question. We've seen two potential implementations of concurrency in a programming language runtime - both having their perks and trade-offs. The CPS-based one has a somewhat proven track record of me implementing <a href='https://github.com/Idorobots/foof'>an Actor Model-based programming language</a>, where CPS enabled some nice additional features. However, <a href='https://www.chrisstucchio.com/blog/2013/actors_vs_futures.html'>some people argue</a> that Promises are <strong>the</strong> way to go and Actor Model should be avoided. I don't buy into that argument, but having uniform and transparent treatment of synchronous and asynchronous code sure does look nice... Let's do some half-assed performance benchmarking to help us decide!<p>(All benchmarks are presented with a baseline of direct-style, synchronous Scheme implementation and are meant to be taken with a grain of salt, after all this is a sample of 1 and my <code>Promise</code> implementation probably is a bit wonky. What should be noted though, is the performance to straightforwardness of implementation ratio of different approaches, which this benchmark highlights. All presented times are in milliseconds.)</p><p>Running 1000 iterations of four versions of <code>&#40;fibonacci 18&#41;</code> on a single core:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-8 col-lg-offset-2"></p><pre><code class="scheme">baseline:  &#40;&#40;real-time . 0.032&#41;  &#40;cpu-time . 0.03&#41;   &#40;gc-time . 0&#41;&#41;
+cps:       &#40;&#40;real-time . 0.159&#41;  &#40;cpu-time . 0.156&#41;  &#40;gc-time . 0.049&#41;&#41;
+cps-yield: &#40;&#40;real-time . 1.013&#41;  &#40;cpu-time . 1.01&#41;   &#40;gc-time . 0.084&#41;&#41;
+promise:   &#40;&#40;real-time . 62.481&#41; &#40;cpu-time . 62.273&#41; &#40;gc-time . 37.052&#41;&#41;
+</code></pre><p></div></div></p><p>Running 100 iterations of four versions of <code>&#40;fibonacci 23&#41;</code> on a single core:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-8 col-lg-offset-2"></p><pre><code class="scheme">baseline:  &#40;&#40;real-time . 0.36&#41;    &#40;cpu-time . 0.36&#41;    &#40;gc-time . 0&#41;&#41;
+cps:       &#40;&#40;real-time . 1.81&#41;    &#40;cpu-time . 1.83&#41;    &#40;gc-time . 0.54&#41;&#41;
+cps-yield: &#40;&#40;real-time . 9.92&#41;    &#40;cpu-time . 9.87&#41;    &#40;gc-time . 0.61&#41;&#41;
+promise:   &#40;&#40;real-time . 1647.02&#41; &#40;cpu-time . 1648.17&#41; &#40;gc-time . 1257.45&#41;&#41;
+</code></pre><p></div></div></p><p>Running 1000 iterations of four versions of <code>&#40;fibonacci 23&#41;</code> on 8 cores (unfortunately, only <code>real-time</code> seems to be somewhat valid for multi-core benchmarks):</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-8 col-lg-offset-2"></p><pre><code class="scheme">baseline:  &#40;&#40;real-time . 0.587&#41;    &#40;cpu-time . 3.782&#41;    &#40;gc-time . 0&#41;&#41;
+cps:       &#40;&#40;real-time . 7.615&#41;    &#40;cpu-time . 47.98&#41;    &#40;gc-time . 10.92&#41;&#41;
+cps-yield: &#40;&#40;real-time . 53.387&#41;   &#40;cpu-time . 353.529&#41;  &#40;gc-time . 26.831&#41;&#41;
+promise:   &#40;&#40;real-time . 5381.291&#41; &#40;cpu-time . 30913.62&#41; &#40;gc-time . 22178.393&#41;&#41;
+</code></pre><p></div></div></p><p>Ouch, <code>Promise</code>-based implementation really stands out here and not in a good way. What happened? As previously briefly mentioned, promises have a lot in common with laziness and, unfortunately, share some of its drawbacks as well. In this case, the benchmark creates a large number of simultaneously existing promises resulting in excessive memory allocation, coping and GC pauses. There are ways to fix it, but these entail much complication to the implementation. Not something I want to explore right now.</p><p>Interestingly enough, the CPS version with yield seems to be about 10 times slower than the plain CPS version, which in turn is about 10 times slower than the baseline. Also, running the benchmark on multiple cores at the same time kinda, sorta appears to slow things down? ¯&#92;&#95;(ツ)&#95;/¯ I blame Racket's <code>time-apply</code> function.</p><p>Now, just for fun, let's run 10 iterations of four versions of <code>&#40;fibonacci 35&#41;</code> on a single core:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-8 col-lg-offset-2"></p><pre><code class="scheme">baseline:  &#40;&#40;real-time . 98.1&#41;   &#40;cpu-time . 98.4&#41;   &#40;gc-time . 0&#41;&#41;
+cps:       &#40;&#40;real-time . 384.1&#41;  &#40;cpu-time . 382.0&#41;  &#40;gc-time . 12.5&#41;&#41;
+cps-yield: &#40;&#40;real-time . 3039.6&#41; &#40;cpu-time . 3041.7&#41; &#40;gc-time . 91.0&#41;&#41;
+promise:   ;; Munched through 16 GB of memory at which point I killed it.
+</code></pre><p></div></div></p><p>To sum it up...</p><p><strong>CPS</strong>:</p><ul><li>Fits Actor Model really well.</li><li>First class control structures - via exposed continuations.</li><li>No <em>sexy</em> asynchronity support.</li><li>CPS-transform is hard to implement.</li><li>Pretty performant out of the box.</li></ul><p><strong>Promises</strong>:</p><ul><li>Little restrictions on concurrency model.</li><li>Seamless asynchronity.</li><li>Easy compilation.</li><li>No first class control structures.</li><li>Poor performance or complex implementation - choose one..</li></ul><p>So, are Promises a viable basic programming language construct? Probably yes. The real question, though, seems to be: is there a middle-ground between CPS and Promises? That's definitely something to be explored further...</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/upnod-3_-the-ram..html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">UPNOD 3: The RAM.</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2016 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
