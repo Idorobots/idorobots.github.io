@@ -1,0 +1,168 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Hacking Huawei E3372 HiLink.</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title="Hacking Huawei E3372 HiLink. Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v.1.3.3" name="generator" /><meta content="Idorobots" name="author" /><meta content="Kajetan Rzepecki, Idorobots, dev-blog, devblog, blog, Clojure, Lisp, Erlang, technology, electronics, hacks, computer science" name="keywords" /><meta content="Yes Mom, I *do* robots." name="description" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>Hacking Huawei E3372 HiLink.</h1><p>Posted on <time>2017-09-10 18:33</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/hacks.html"><span class="label label-info small">hacks</span></a> <a class="tag" href="../tags/huawei.html"><span class="label label-info small">huawei</span></a> <a class="tag" href="../tags/networking.html"><span class="label label-info small">networking</span></a> <a class="tag" href="../tags/reverse-engineering.html"><span class="label label-info small">reverse engineering</span></a></nav></div></div></div></header><p>Here's a quick post showing how I solved an issue with an unreliable LTE backup connection. Depending on your hardware, firmware & UI version YMMV.</p><h2><a name="the-problem"></a><a href="#the-problem">The problem</a></h2><p>It appears that Huawei E3372 frequently disconnects from the LTE network for no apparent reason. It wouldn't be much of a problem if it managed to quickly and reliably reconnect, but that isn't the case it would seem. Whenever that happens packets get lost and websites don't load properly, and overall internet experience is well below acceptable. After some googling it turned out that it might be caused by E3372 automatically disconnecting from the network, but fortunately enough, automatic disconnects when idling seem to be a configurable feature [sic] in the HiLink version of the modem. Less fortunately though, the default interval is set to 5 minutes, and obviously needs to be changed, potentially even disabled altogether. Let's see what the WebUI has to offer in this regard:</p><p><img src="http://blog.idorobots.org/media/huawei/badUI.png" alt="Y u no cooperate" /></p><p>Oh...</p><p><div class="text-center"></p><p>(ノ `⌒´)ノ︵ ┻━┻</p><p></div> <a name="preview-more"></a><h2><a name="reverse-engineering-the-api"></a><a href="#reverse-engineering-the-api">Reverse-engineering the API</a></h2></p><p>Let's figure this thing out, shall we? Here are my device's versions:</p><ul><li>Hardware version: CL2E3372HM</li><li>Software version: 22.315.01.00.1080</li><li>Web UI version: 17.100.13.02.1080</li></ul><p>So, when applying the settings with auto-disconnect interval set to 120 minutes we're making a request to <code>/api/dialup/connection</code> endpoint on the device (parts of the request were truncated for brevity):</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="bash">curl 'http://192.168.8.1/api/dialup/connection' \
+  -H 'Host: 192.168.8.1' \
+  -H 'User-Agent: ...' \
+  -H 'Accept: &#42;/&#42;' \
+  -H 'Accept-Language: en-US,en;q=0.5' \
+  -H 'Referer: http://192.168.8.1/html/mobileconnection.html' \
+  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  -H '&#95;&#95;RequestVerificationToken: qJh5xzt1Bdf5TbE5TSDjXHfOtU5bVWND' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Cookie: SessionID=...' \
+  -H 'DNT: 1' \
+  -H 'Connection: keep-alive' \
+  -H 'Pragma: no-cache' \
+  -H 'Cache-Control: no-cache' \
+  --data ...
+</code></pre><p></div></div></p><p>And the data:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;request&gt;
+  &lt;RoamAutoConnectEnable&gt;0&lt;/RoamAutoConnectEnable&gt;
+  &lt;MaxIdelTime&gt;7200&lt;/MaxIdelTime&gt;
+  &lt;ConnectMode&gt;0&lt;/ConnectMode&gt;
+  &lt;MTU&gt;1500&lt;/MTU&gt;
+  &lt;auto&#95;dial&#95;switch&gt;1&lt;/auto&#95;dial&#95;switch&gt;
+  &lt;pdp&#95;always&#95;on&gt;0&lt;/pdp&#95;always&#95;on&gt;
+&lt;/request&gt;
+</code></pre><p></div></div></p><p>As we can see, the actual time, <code>MaxIdelTime</code> [sic], is represented as seconds instead of minutes, so 7200 seconds instead of 120 minutes. Other than that, there's not much more we need to spoof - just a <code>SessionID</code> and <code>&#95;&#95;RequestVerificationToken</code>.</p><p><code>SessionID</code> is pretty easy, if your device has user login disabled you've already got it as a <code>Set-Cookie</code> header when fetching any of the HTML pages, but that the crap is <code>&#95;&#95;RequestVerificationToken</code>? Well, of course it's a way of authorizing the requests, if we omit it the request will be rejected with an error, but where do we get it from?</p><p>Looking through the dozens upon dozens of requests that the WebUI constantly makes, we can find two promising leads:</p><ul><li><code>/api/user/hilink&#95;login</code></li><li><code>/api/webserver/publickey</code></li></ul><p>Unfortunately, both of these are a dead end, the first one does, well, nothing and the second one retrieves an RSA public key from the backend - perhaps it's being used for signing something so that backend knows that the request is valid?</p><p>Looking through the dozens upon dozens of global JavaScript variables that the WebUI constantly uses, we can find several gems:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="javascript">function base64encode&#40;str&#41; {
+    var out, i, len;
+    var c1, c2, c3;
+    len = str.length;
+    i = 0;
+    out = '';
+    while &#40;i &lt; len&#41; {
+        c1 = str.charCodeAt&#40;i++&#41; &amp; 0xff;
+        if &#40;i == len&#41; {
+            out += g&#95;base64EncodeChars.charAt&#40;c1 &gt;&gt; 2&#41;;
+            out += g&#95;base64EncodeChars.charAt&#40;&#40;c1 &amp; 0x3&#41; &lt;&lt; 4&#41;;
+            out += '==';
+            break;
+        }
+        c2 = str.charCodeAt&#40;i++&#41;;
+        if &#40;i == len&#41; {
+            out += g&#95;base64EncodeChars.charAt&#40;c1 &gt;&gt; 2&#41;;
+            out += g&#95;base64EncodeChars.charAt&#40;&#40;&#40;c1 &amp; 0x3&#41; &lt;&lt; 4&#41; | &#40;&#40;c2 &amp; 0xF0&#41; &gt;&gt; 4&#41;&#41;;
+            out += g&#95;base64EncodeChars.charAt&#40;&#40;c2 &amp; 0xF&#41; &lt;&lt; 2&#41;;
+            out += '=';
+            break;
+        }
+        c3 = str.charCodeAt&#40;i++&#41;;
+        out += g&#95;base64EncodeChars.charAt&#40;c1 &gt;&gt; 2&#41;;
+        out += g&#95;base64EncodeChars.charAt&#40;&#40;&#40;c1 &amp; 0x3&#41; &lt;&lt; 4&#41; | &#40;&#40;c2 &amp; 0xF0&#41; &gt;&gt; 4&#41;&#41;;
+        out += g&#95;base64EncodeChars.charAt&#40;&#40;&#40;c2 &amp; 0xF&#41; &lt;&lt; 2&#41; | &#40;&#40;c3 &amp; 0xC0&#41; &gt;&gt; 6&#41;&#41;;
+        out += g&#95;base64EncodeChars.charAt&#40;c3 &amp; 0x3F&#41;;
+    }
+    return out;
+}
+
+function base64&#95;encode &#40;input&#41; {
+    &#95;keyStr = &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=&quot;;
+    var output = &quot;&quot;;
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
+    input = &#95;utf8&#95;encode&#40;input&#41;;
+    while &#40;i &lt; input.length&#41; {
+        chr1 = input.charCodeAt&#40;i++&#41;;
+        chr2 = input.charCodeAt&#40;i++&#41;;
+        chr3 = input.charCodeAt&#40;i++&#41;;
+        enc1 = chr1 &gt;&gt; 2;
+        enc2 = &#40;&#40;chr1 &amp; 3&#41; &lt;&lt; 4&#41; | &#40;chr2 &gt;&gt; 4&#41;;
+        enc3 = &#40;&#40;chr2 &amp; 15&#41; &lt;&lt; 2&#41; | &#40;chr3 &gt;&gt; 6&#41;;
+        enc4 = chr3 &amp; 63;
+        if &#40;isNaN&#40;chr2&#41;&#41; {
+            enc3 = enc4 = 64;
+        } else if &#40;isNaN&#40;chr3&#41;&#41; {
+            enc4 = 64;
+        }
+        output = output +
+        this.&#95;keyStr.charAt&#40;enc1&#41; + this.&#95;keyStr.charAt&#40;enc2&#41; +
+        this.&#95;keyStr.charAt&#40;enc3&#41; + this.&#95;keyStr.charAt&#40;enc4&#41;;
+    }
+    return output;
+}
+</code></pre><p></div></div></p><p>Not just one, but TWO implementations of base64 encoding. Redundancy is key. ( ͡° ͜ʖ ͡°)</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="javascript">function doRSAEncrypt&#40;encstring&#41; {
+    if&#40;encstring == ''&#41; {
+        return '';
+    }
+
+    if&#40;typeof&#40;g&#95;moduleswitch.encrypt&#95;enabled&#41; == 'undefined' || g&#95;moduleswitch.encrypt&#95;enabled != 1&#41;{
+        return encstring;
+    }
+
+    if&#40;g&#95;encPublickey.e == ''&#41; {
+        getEncpubkey&#40;&#41;;
+    }
+    var rsa = new RSAKey&#40;&#41;;
+    rsa.setPublic&#40;g&#95;encPublickey.n, g&#95;encPublickey.e&#41;;
+    encstring = base64&#95;encode&#40;encstring&#41;;
+    var num = encstring.length / 245;
+    var restotal = '';
+    for &#40;i = 0; i &lt; num; i++&#41; {
+        var encdata = encstring.substr&#40;i &#42; 245, 245&#41;;
+        var res = rsa.encrypt&#40;encdata&#41;;
+        restotal += res;
+    }
+    return restotal;
+}
+</code></pre><p></div></div></p><p>It appears that <code>/api/webserver/publickey</code> is used for some sort of custom encryption. It's always nice to roll your own, custom crypto on the frontend while connecting via unencrypted HTTP. ( ͡° ͜ʖ ͡°) But fear not! Even though <code>g&#95;moduleswitch.encrypt&#95;enabled</code> is set to <code>&quot;1&quot;</code>, this custom encryption appears to never be used anyway, since the only callee of <code>doRSAEncrypt&#40;&#41;</code> checks if <code>options.enc</code> passed via arguments is set, which obviously isn't. Never. Ever. ( ͡° ͜ʖ ͡°)</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="javascript">if&#40;$.isArray&#40;g&#95;requestVerificationToken&#41;&#41; {
+  if&#40;g&#95;requestVerificationToken.length &gt; 0&#41; {
+    if&#40;g&#95;password&#95;type == '4'&#41; {
+      psd = base64encode&#40;SHA256&#40;name + base64encode&#40;SHA256&#40;$&#40;'#password'&#41;.val&#40;&#41;&#41;&#41; + g&#95;requestVerificationToken&#91;0&#93;&#41;&#41;;
+    } else {
+      psd = base64encode&#40;$&#40;'#password'&#41;.val&#40;&#41;&#41;;
+    }
+
+  } else {
+    setTimeout&#40; function &#40;&#41; {
+      if&#40;g&#95;requestVerificationToken.length &gt; 0&#41; {
+        login&#40;destnation, callback, redirectDes&#41;;
+      }
+    }, 50&#41;
+    return;
+  }
+} else {
+  psd = base64encode&#40;$&#40;'#password'&#41;.val&#40;&#41;&#41;;
+}
+
+var request = {
+  Username: name,
+  Password: psd,
+  password&#95;type: g&#95;password&#95;type
+};
+</code></pre><p></div></div></p><p>There are some shenanigans going on with passwords as well. Is that... Is that salting? Good thing it's on frontend, on an unencrypted connection with <code>g&#95;password&#95;type</code> set to 0, instead of 4. ( ͡° ͜ʖ ͡°)</p><p>OK, let's stop right here, cause I'm getting carried away. Looking though the sources we can find several more dead-end leads such as the <code>/api/webserver/token</code> endpoint which sounds promising but appears to require preexisting <code>&#95;&#95;RequestVerificationToken</code> in addition to never being used in the first place...</p><p>We must be missing something, since the <code>g&#95;requestVerificationToken</code> can't just appear from thin air, right?</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="javascript">function getAjaxToken&#40;&#41; {
+    var meta = $&#40;&quot;meta&#91;name=csrf&#95;token&#93;&quot;&#41;;
+    var i = 0;
+
+    if&#40;meta.length &gt; 0&#41; {
+        g&#95;requestVerificationToken = &#91;&#93;;
+        for&#40;i; i &lt; meta.length; i++&#41; {
+            g&#95;requestVerificationToken.push&#40;meta&#91;i&#93;.content&#41;;
+        }
+    } else {
+        getAjaxData&#40;'api/webserver/token', function&#40;$xml&#41; {
+            var ret = xml2object&#40;$xml&#41;;
+            if &#40;'response' == ret.type&#41; {
+                g&#95;requestVerificationToken = ret.response.token;
+            }
+        }, {
+            sync: true
+        }&#41;;
+    }
+}
+</code></pre><p></div></div></p><p><div class="text-center"></p><p>( ͡° ͜ʖ ͡°)</p><p></div></p><p>So... It was on the page all along... By retrieving any of the HTML pages we get both "security" values - one in the response headers and the other in the response body, and that's all that is needed to properly perform all the requests we care about. There's just one thing remaining though...</p><p>It's mighty inconvenient to have to parse the body looking for <code>meta</code> tags with certain name, and having to look for the <code>Set-Cookie</code> header in the response. Fortunately, the same conclusions came to the authors of the WebUI, so they kindly provided <code>/api/webserver/SesTokInfo</code> endpoint, which returns both of these values in a convenient fashion. ( ͡° ͜ʖ ͡°)</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="bash">curl 'http://192.168.8.1/api/webserver/SesTokInfo'
+</code></pre><p></div></div></p><p>Response (again, long values omitted for brevity):</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;response&gt;
+  &lt;SesInfo&gt;SessionID=...&lt;/SesInfo&gt;
+  &lt;TokInfo&gt;N6aUzSFsKRXnrTJgcL482NaKqsO+PRF7&lt;/TokInfo&gt;
+&lt;/response&gt;
+</code></pre><p></div></div></p><p>I. Kid. You. Not.</p><p>All that is left is to spoof the <code>/api/dialup/connection</code> request using these conveniently obtained values:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="bash">curl 'http://192.168.8.1/api/dialup/connection' \
+  -H 'Cookie: SessionID=...' \
+  -H '&#95;&#95;RequestVerificationToken: N6aUzSFsKRXnrTJgcL482NaKqsO+PRF7' \
+  --data '&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;request&gt;&lt;RoamAutoConnectEnable&gt;0&lt;/RoamAutoConnectEnable&gt;&lt;MaxIdelTime&gt;86400&lt;/MaxIdelTime&gt;&lt;ConnectMode&gt;0&lt;/ConnectMode&gt;&lt;MTU&gt;1500&lt;/MTU&gt;&lt;auto&#95;dial&#95;switch&gt;1&lt;/auto&#95;dial&#95;switch&gt;&lt;pdp&#95;always&#95;on&gt;0&lt;/pdp&#95;always&#95;on&gt;&lt;/request&gt;'
+</code></pre><p></div></div></p><p>This will set the auto-disconnect interval to 24 hours. To verify that it actually worked we can check the <code>/api/dialup/connection</code> request that the WebUI itself performs:</p><p><img src="http://blog.idorobots.org/media/huawei/hacked.png" alt="hacked" /></p><p>Neat.</p><h2><a name="while-we_re-at-it..."></a><a href="#while-we_re-at-it...">While we're at it...</a></h2><p>The same hackaround can be used to programatically send SMS from the LAN using the E3372 API, here's a simple script that does just that:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="bash">#!/bin/bash
+
+DATA=`curl http://192.168.8.1/api/webserver/SesTokInfo`
+SESSION&#95;ID=`echo &quot;$DATA&quot; | grep &quot;SessionID=&quot; | cut -b 10-147`
+TOKEN=`echo &quot;$DATA&quot; | grep &quot;TokInfo&quot; | cut -b 10-41`
+
+curl http://192.168.8.1/api/sms/send-sms -H &quot;Cookie: $SESSION&#95;ID&quot; -H &quot;&#95;&#95;RequestVerificationToken: $TOKEN&quot; --data &quot;&lt;?xml version='1.0' encoding='UTF-8'?&gt;&lt;request&gt;&lt;Index&gt;-1&lt;/Index&gt;&lt;Phones&gt;&lt;Phone&gt;$1&lt;/Phone&gt;&lt;/Phones&gt;&lt;Sca&gt;&lt;/Sca&gt;&lt;Content&gt;$2&lt;/Content&gt;&lt;Length&gt;-1&lt;/Length&gt;&lt;Reserved&gt;1&lt;/Reserved&gt;&lt;Date&gt;-1&lt;/Date&gt;&lt;/request&gt;&quot;
+</code></pre><p></div></div></p><p>Use it like this:</p><p><div class="row"><div class="col-xs-12 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3"></p><pre><code class="bash">./send&#95;sms.sh +1234567890 &quot;Hello world!&quot;
+</code></pre><p></div></div></p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/running-modern-gnu_linux-on-powermac-g5---the-complete-instruction.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Running modern GNU/Linux on PowerMac G5 - the complete instruction</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2017 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
