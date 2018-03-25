@@ -1,0 +1,73 @@
+==================================================================
+https://keybase.io/kajtek
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://blog.idorobots.org
+  * I am kajtek (https://keybase.io/kajtek) on keybase.
+  * I have a public key with fingerprint 115F 54A0 0733 1F81 FBCD  8E4D 652F 6916 DD61 728E
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "01204580fb56a9a0c17172a5dd5a1bf521f0649bc8e669f18579022ae6cf4585ff370a",
+      "fingerprint": "115f54a007331f81fbcd8e4d652f6916dd61728e",
+      "host": "keybase.io",
+      "key_id": "652f6916dd61728e",
+      "kid": "010188eb98e46f215b167d06191937559dd52fe6e97f1d5ebae21f57fb14d87535ed0a",
+      "uid": "2b6885eb78ea853558efb865ae633619",
+      "username": "kajtek"
+    },
+    "service": {
+      "hostname": "blog.idorobots.org",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 1
+  },
+  "ctime": 1521970513,
+  "expire_in": 157680000,
+  "prev": "425dd57429e70f7224fa6023931e4310396bfecfff41ccedab0eb2162cffc19c",
+  "seqno": 8,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+
+owFtUmtMVEcY3QUqsigCWqSkFrzSHyqyd+77bjYaodKYWKwPNrpFt/cxs1yBvevd
+ZRVwrTwMqZClVi0+C6loE2MaV+urLVq7oibSl8S0qVArFgoBrZraVmmhs0T/df5M
+5vvOOXPON/Pe1FjTZDO0amm9khEyXx+STc6z5Y5qQtbVSsJWTZTCiQ2WqdDnd5Vq
+KmEjSECRDCuQSGY5SZRIBfCApyRWVVkJyIilACI5RpQVAXKciIDA8iJJURLkFIR5
+LEI0T0pEDoE0jxsaXkPz+LEsACxiGYkkeZoGSABIVlQBMirHUogTAaeqHL5GgJhY
+ovuiDGxOlnwwV9NxDR9cE/b+B//cNwkEAcoiVuUQBVgZcLxKckAEIs2zrIgDUAhy
+UOQRUFkoSxBHYXkkA0YVeJZmoTrhu2JCjpI5QcAoXoCSgJusAJEscCzOSdNYNAr0
+QcMjlcOoV2mDH5YSwRwC1wKaAqNjjeZ41pfLdHeupuqGLut+X65uuDHfa+h+XdHL
+cL/E7/f6bFG+v9IbJWyCsuuZlEvWPCqeJWYEoOHTdA9hAxip+LWoNsAvIvIkC+gc
+Am72agZ0aVEEy3MCiVf0HhjAkgzFFuMZ8AwlQp5EPEUxSOJIihZpABkakLTIyQgq
+CCEGKApUJZmEMgU4CpcUICpENN1Gj07YBOxTcmNNn+b2SP4KAxJBy7sxdJzJPNk0
+K212XIprdVs8nVkz+nXojef/74WY6OczWRKSn1fieqeNr7U6M+KM/PrGyymn7gXs
+9oFLmbcId+mV7R+sH+6+ummkOHUy993o6NBLTGXntPubYsmLa44vXf7KuJq95XRi
+7/Qb1/NqDy3MSLKrn480710VaGxYnpqxOLzStNQRDD590uM8A5acsiuVSQd/anja
+Vlxl3r+u0/6D3lOfuUSZP896J2Ififw+o0upvjZ/4c5QztDr5PRjTMv9to6mUEV4
+6oaMjva3Zh7IHukmjxWl53/hzIzxPO4UT91cvDEu67xhmTVjytVOFOnj39/bZktN
+vLH1wvrWt5OLIta6g3fu2ObUxa+5G87bX3OiX9xxgTw0enrn40bHydZ3Xi44Wuwp
+2nJl9YW6/OFje95U47/8pMP64sIPGw+eZFMS/p5RoGSbb37WP3D8nPU23ecd/Cap
+6ZePBvfJNXsLLHONhpp7Wy9vnvOg+0n1mLvLCWvOL8gtrFhfWH70Ybgk5GzpSBl7
+dW1RaCzS8nEPY/ltj/lqKnXcXh2YeeYKkXf61/Jz4YTD5THj4qPWbz9N3z7prwHX
+7sJ5s6yO17bN3G/cSj0yZfePuemFJVP/2G2J3dK+aG579pnbtYPOtK27ascHF3Tv
+c8RG6pvPniCvrZj9/fiRJY/W7ViZ06U0HDjs+Plewarmqrx/H16KXXagP3j3QYLr
++qIVOy8Gd/25rC/LSA8fHd426av7tVnJ/5RZm7qqEuct+g8=
+=fD8C
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/kajtek
+
+==================================================================
