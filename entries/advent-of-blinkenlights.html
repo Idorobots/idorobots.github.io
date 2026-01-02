@@ -1,0 +1,247 @@
+<!DOCTYPE html><html><head><meta charset="utf-8" /><title>Advent of Blinkenlights</title><link href="../style/bootstrap.min.css" rel="stylesheet" type="text/css" /><link href="../style/font-awesome.min.css" rel="stylesheet" type="text/css" /><link href="../style/ts.theme.dark.css" rel="stylesheet" type="text/css" /><link href="../style/hljs.theme.hybrid.css" rel="stylesheet" type="text/css" /><link href="../style/blog.css" rel="stylesheet" type="text/css" /><link href="../index.xml" rel="alternate" title="Advent of Blinkenlights Feed" type /><link href="../media/favicon.ico" rel="icon" type="image/png" /><script src="../js/jquery-2.2.0.min.js" type="text/javascript"></script><script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script><script src="../js/bootstrap.min.js" type="text/javascript"></script><script src="../js/highlight.min.js" type="text/javascript"></script><script src="../js/blog.js" type="text/javascript"></script><meta content="width=device-width, initial-scale=1.0" name="viewport" /><meta content="λ-blog v.1.3.3" name="generator" /><meta content="Idorobots" name="author" /><meta content="Kajetan Rzepecki, Idorobots, dev-blog, devblog, blog, Clojure, Lisp, Erlang, technology, electronics, hacks, computer science" name="keywords" /><meta content="Yes Mom, I *do* robots." name="description" /></head><body><nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="navbar-header"><button class="navbar-toggle navbar-brand pull-left" data-target="#navbar-responsive-collapse" data-toggle="collapse" type="button"><div><img src="../media/logo.svg" />idorobots.org</div></button><div class="hidden-xs"><a class="navbar-brand" href=".."><div><img src="../media/logo.svg" />idorobots.org</div></a></div></div><div class="collapse navbar-collapse navbar-right" id="navbar-responsive-collapse"><ul class="nav navbar-nav"><li><a href="https://keybase.io/kajtek/"><i class="fa fa-user"> Keybase</i></a></li><li><a href="https://github.com/Idorobots"><i class="fa fa-github"></i> GitHub</a></li><li><a href="../resume.html"><i class="fa fa-trophy"></i> Resumé</a></li><li><a href="../contact.html"><i class="fa fa-comment"></i> Contact</a></li><li class="divider hidden-sm hidden-md hidden-lg"></li><li class="hidden-sm hidden-md hidden-lg"><a href=".."><i class="fa fa-home"></i> Home</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li class="hidden-sm hidden-md hidden-lg"><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li><li class="dropdown hidden-xs"><a href="#"><i class="fa fa-chevron-right"></i></a><ul class="dropdown-menu"><li><a href=".."><i class="fa fa-home"></i> Home</a></li><li><a href="../archives.html"><i class="fa fa-archive"></i> Archives</a></li><li><a href="../tags/index.html"><i class="fa fa-tags"></i> Tag Cloud</a></li><li><a href="../index.xml"><i class="fa fa-feed"></i> Feed</a></li></ul></li></ul></div></div></nav><div class="body-wrap"><article id="page"><div class="container"><header class="page-header"></header><article><header><div class="panel panel-default"><div class="panel-body"><div class="text-center"><h1>Advent of Blinkenlights</h1><p>Posted on <time>2026-01-02 19:46</time> by <a href="https://github.com/Idorobots">Idorobots</a></p><nav><a class="tag" href="../tags/hc11.html"><span class="label label-info small">HC11</span></a> <a class="tag" href="../tags/z80.html"><span class="label label-info small">Z80</span></a> <a class="tag" href="../tags/arduino.html"><span class="label label-info small">arduino</span></a> <a class="tag" href="../tags/electronics.html"><span class="label label-info small">electronics</span></a> <a class="tag" href="../tags/esp32.html"><span class="label label-info small">esp32</span></a> <a class="tag" href="../tags/hardware.html"><span class="label label-info small">hardware</span></a> <a class="tag" href="../tags/reverse-engineering.html"><span class="label label-info small">reverse engineering</span></a> <a class="tag" href="../tags/stm32.html"><span class="label label-info small">stm32</span></a> <a class="tag" href="../tags/vintage-electronics.html"><span class="label label-info small">vintage electronics</span></a></nav></div></div></div></header><p>I am a long-time electronics hobbyist and I accumulated quite a few different micro-controller boards over the years. I figured it would be nice to put them to some good use, but recently I find myself almost exclusively using the beefier kinds for the simplest of things, because everybody needs RTOS and WiFi to blink some LEDs, right? All of my simpler and less capable boards are just sitting there, collecting dust. Let's change that by... Blinking some LEDs. 🤷🏼</p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/blink.gif" alt="blink" /></p><p>As these things tend to unfold, <a href='https://github.com/Idorobots/advent-of-blinkenlights'>the project grew in scope a lot</a>, and due to various complications I didn't actually make it on time for the holidays. I did get a blog post out of it, so my 2019 New Year's resolution of returning to blogging can now be marked as done! <a name="preview-more"></a><h2><a name="blinkenlights"></a><a href="#blinkenlights">Blinkenlights</a></h2></p><p>Given the roster of boards I had in mind, ranging from miniscule, to lavish in terms of resources and GPIOs, the only real, viable project that could run on each of them was to blink some LEDs. As per the Wikipedia, <a href='https://en.wikipedia.org/wiki/Blinkenlights'>blinkenlights</a> are "diagnostic lights on front panels of old mainframe computers." It's fair, and all, especially with this gem of a piece of CS lore:</p><pre><code>ACHTUNG!
+ALLES TURISTEN UND NONTEKNISCHEN LOOKENSPEEPERS!
+DAS KOMPUTERMASCHINE IST NICHT FÜR DER GEFINGERPOKEN UND MITTENGRABEN! ODERWISE IST EASY TO SCHNAPPEN DER SPRINGENWERK, BLOWENFUSEN UND POPPENCORKEN MIT SPITZENSPARKEN.
+IST NICHT FÜR GEWERKEN BEI DUMMKOPFEN. DER RUBBERNECKEN SIGHTSEEREN KEEPEN DAS COTTONPICKEN HÄNDER IN DAS POCKETS MUSS.
+ZO RELAXEN UND WATSCHEN DER BLINKENLICHTEN.
+</code></pre><p>...but for me there's just one real association when I hear blinkenlights:</p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/knightrider.jpg" alt="knightrider" /></p><h3><a name="project-plan"></a><a href="#project-plan">Project plan</a></h3><p>I'd like to support several boards for this project:</p><ul><li>ESP32 C6 super mini,</li><li>STM32 bluepill</li><li>Arduino Uno R3</li><li>Axiom CME11A</li><li>Some one-off Z80 EUROCARD module I found on a local auction somewhere.</li></ul><p>All of these have at least 16 GPIOs, some timers and optionally an RTC available, so that dictates what we can do in terms of code:</p><ul><li>Use LED bars & GPIOs to display an animated blinkenlights,</li><li>Use timers to semi-precisely drive the animation frames.</li><li>Use the (optional) RTC to synchronize the boards and make them display the same animation.</li></ul><p>I'd like there to be several animations and I'd like the boards to switch to the next animation periodically.</p><p>To achieve the above, we need to abstract most of these features in a Hardware Abstraction Layer:</p><pre><code class="c">// Borrowed from Arduino, turned out not to map that well to the older boards:
+#define INPUT 0
+#define OUTPUT 1
+
+void pinMode&#40;uint8&#95;t pin, uint8&#95;t mode&#41;;
+
+#define HIGH 1
+#define LOW 0
+
+void digitalWrite&#40;uint8&#95;t pin, uint8&#95;t value&#41;;
+uint8&#95;t digitalRead&#40;uint8&#95;t pin&#41;;
+
+// Timing using 64-bit counters, so that we can leave these running and not have weird roll-over bugs after 50 days.
+uint64&#95;t currMillis&#40;void&#41;;
+void delayMillis&#40;uint64&#95;t ms&#41;;
+
+// All boards will log some stuff, but we want a super simple logging feature.
+void initSerial&#40;void&#41;;
+void display&#40;const char &#42;str&#41;;
+void displayUInt&#40;uint32&#95;t value&#41;;
+
+// And lastly, the optional RTC:
+#if defined&#40;HAS&#95;RTC&#41;
+  void initRTC&#40;void&#41;;
+  void toggleRTC&#40;bool run&#41;;
+  void setRTCTime&#40;struct tm &#42;time&#41;;
+  void getRTCTime&#40;struct tm &#42;time&#41;;
+#endif
+</code></pre><p>With the above abstraction we can conditionally compile the HAL code for each board:</p><pre><code class="c">
+#if defined&#40;ARDUINO&#41;
+  #include &lt;Arduino.h&gt;
+
+  #if defined&#40;ARDUINO&#95;ARCH&#95;ESP32&#41;
+    #include &quot;hal/esp32.h&quot;
+  #elif defined&#40;ARDUINO&#95;ARCH&#95;STM32&#41;
+    #include &quot;hal/stm32.h&quot;
+  #elif defined&#40;ARDUINO&#95;ARCH&#95;AVR&#41;
+    #include &quot;hal/atmega.h&quot;
+  #endif
+
+#else
+  #include &lt;stdint.h&gt;
+  #include &lt;stdbool.h&gt;
+  #include &lt;stdarg.h&gt;
+  #include &lt;time.h&gt;
+
+  #if defined&#40;Z80&#95;ARCH&#95;TEMEX&#41;
+    #include &quot;hal/temex/platform.h&quot;
+  #elif defined&#40;HC11&#95;ARCH&#95;CME11&#41;
+    #include &quot;hal/cme11.h&quot;
+  #endif
+#endif
+</code></pre><p>...and keep the main animation code fairly generic:</p><pre><code class="c">void setup&#40;void&#41; {
+  initSerial&#40;&#41;;
+
+#if defined&#40;HAS&#95;RTC&#41;
+  initRTC&#40;&#41;;
+
+  struct tm curr;
+  getRTCTime&#40;&amp;curr&#41;;
+
+  if &#40;curr.tm&#95;year &lt; 26&#41; {
+    display&#40;&quot;Setting up RTC clock.\r\n&quot;&#41;;
+
+    struct tm time;
+    time.tm&#95;year = 26;
+
+    setRTCTime&#40;&amp;time&#41;;
+    toggleRTC&#40;true&#41;;
+  }
+#endif
+
+  for &#40;uint8&#95;t i = 0; i &lt; 16; i++&#41; {
+    pinMode&#40;LED&#95;PINS&#91;i&#93;, OUTPUT&#41;;
+  }
+
+  ledBar&#40;0x0000&#41;;
+}
+
+void loop&#40;void&#41; {
+  uint64&#95;t now = currMillis&#40;&#41;;
+
+  if &#40;now &gt; nextStepTs&#41; {
+    step&#40;now&#41;;
+    nextStepTs = nextStepTs + STEP&#95;INTERVAL;
+  }
+
+#if defined&#40;HAS&#95;RTC&#41;
+  struct tm time;
+  getRTCTime&#40;&amp;time&#41;;
+
+  if &#40;&#40;&#40;uint64&#95;t&#41; time.tm&#95;min&#41; != nextAnimTs&#41; {
+    nextAnim&#40;&#41;;
+    nextAnimTs = time.tm&#95;min;
+  }
+#else
+  if &#40;now &gt;= nextAnimTs&#41; {
+    nextAnim&#40;&#41;;
+    nextAnimTs = nextAnimTs + ANIM&#95;INTERVAL;
+  }
+#endif
+
+  delayMillis&#40;STEP&#95;INTERVAL/5&#41;;
+}
+</code></pre><p>If a board supports the RTC, then we use that for animation progression, if not, the usual milliseconds will be used. The board will drift a little bit, as these internal timers tend to be inaccurate.</p><h2><a name="esp32-c6-super-mini"></a><a href="#esp32-c6-super-mini">ESP32 C6 super mini</a></h2><p><div class="row"><div class="col-xs-4"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/supermini.jpg" alt="esp32" /></p><p></div><div class="col-xs-8"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Cores</td><td>ESP32-C6, High Performance Risc-V and Low Power Risc-V, 32 bit</td></tr><tr><td>Clock</td><td>160 MHz for HP, 20 MHz for LP</td></tr><tr><td>SRAM</td><td>512K for HP, 16k for LP</td></tr><tr><td>FLASH</td><td>320K (internal, expandable externally)</td></tr><tr><td>GPIO</td><td>22 (some not available on a convenient header)</td></tr><tr><td>Peripherals</td><td>2.4 GHz Wi-Fi 6 (802.11ax), Bluetooth 5 (LE), IEEE 802.15.4 (Zigbee), 3 <em> SPI (two for external flash), 3 </em> UART (one low-power), 2 <em> I2C (one low-power), I2S, RMT, 2 </em> TWAI, SDIO, Motor Control PWM, 7-channel 12-bit ADC, USB 2.0, WDT, 7 timers (various functions)</td></tr><tr><td>Power draw</td><td>0.1W (not changing the LiPo battery, WiFi & BT powered down), 0.15W (not charging the LiPo, WiFi connected)</td></tr><tr><td>Other</td><td>Built-in core temperature sensor, built-in AES, RSA and HMAC. JTAG debugger support, LiPo battery charger</td></tr></tbody></table><p></div></div></p><p>Starting with the usual, beefier kind of micro-controller. An ESP32, Risc-V variant (C6) is a beefy, two-core micro-controller with some really impressive specs. It is somewhat well-supported within the usual Arduino-based tools such as, Arduino IDE and Platform IO and is more than capable of driving some LEDs.</p><p>The only caveat for this board is the fact that some of the GPIOs available on the headers are used for USB communication, either making it harder to program the board when these pins are used, or having to solder the much less convenient micro-dot pins. I initially went with the former, but that proved to be really annoying. Could be solved by Over-The-Air flashing, but doing that for just this one board seemed excessive. Instead, I just used the remaining well-aligned micro-dot pin instead.</p><p>This board implements the RTC HAL routines with NTP, so it doesn't require setting up the time, but does require a WiFi connection to be set up. This will cause the board to boot for a longer time, but the RTC will be used to synchronize the animations with the remaining boards.</p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The toolchain is why I tend to use these boards for everything as a hobbyist. Just initialize a new PlatformIO project, define the environments and you're good to go within 5 minutes:</p><pre><code class="ini">&#91;env&#93;
+framework = arduino
+monitor&#95;speed = 115200
+
+&#91;env:esp32c6&#93;
+platform = espressif32
+board = esp32-c6-super-mini
+</code></pre><p>For this particular chip, the C6, it seems that the PlatformIO Arduino framework from Espressif that's currently pinned upstream does not come configured with any support, so we need to use a different, community-forked platform:</p><pre><code class="ini">&#91;env:esp32c6&#93;
+; Using pioarduino instead of platformio to get support for the C6
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+board = esp32-c6-super-mini
+</code></pre><p>The super-mini board's configuration itself is also not available, so we need to add that in <code>./boards/esp32-c6-super-mini.json</code>:</p><pre><code class="json">{
+  &quot;build&quot;: {
+    &quot;core&quot;: &quot;esp32&quot;,
+    &quot;f&#95;cpu&quot;: &quot;160000000L&quot;,
+    &quot;f&#95;flash&quot;: &quot;80000000L&quot;,
+    &quot;flash&#95;mode&quot;: &quot;qio&quot;,
+    &quot;mcu&quot;: &quot;esp32c6&quot;,
+    &quot;variant&quot;: &quot;esp32c6&quot;,
+    &quot;extra&#95;flags&quot;: &#91;
+      &quot;-DARDUINO&#95;ESP32C6&#95;DEV&quot;,
+      &quot;-DARDUINO&#95;USB&#95;MODE=1&quot;,
+      &quot;-DARDUINO&#95;USB&#95;CDC&#95;ON&#95;BOOT=1&quot;
+    &#93;
+  },
+  &quot;connectivity&quot;: &#91;
+    &quot;wifi&quot;,
+    &quot;bluetooth&quot;
+  &#93;,
+  &quot;frameworks&quot;: &#91;
+    &quot;arduino&quot;,
+    &quot;espidf&quot;
+  &#93;,
+  &quot;name&quot;: &quot;ESP32-C6 Super Mini&quot;,
+  &quot;upload&quot;: {
+    &quot;flash&#95;size&quot;: &quot;4MB&quot;,
+    &quot;maximum&#95;ram&#95;size&quot;: 524288,
+    &quot;maximum&#95;size&quot;: 4194304,
+    &quot;require&#95;upload&#95;port&quot;: true,
+    &quot;speed&quot;: 460800
+  },
+  &quot;url&quot;: &quot;https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitc-1/index.html&quot;,
+  &quot;vendor&quot;: &quot;Espressif&quot;
+}
+</code></pre><p>And lastly, not to have to define the WiFi SSID nor password in the code we pass that as build params:</p><pre><code class="ini">&#91;env:esp32c6&#93;
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+board = esp32-c6-super-mini
+build&#95;flags =
+    -D HAS&#95;RTC
+    -D ESP32&#95;SSID=${sysenv.WIFI&#95;SSID}
+    -D ESP32&#95;PASS=${sysenv.WIFI&#95;PASS}
+</code></pre><p>Now, you can pass your pass and ssid via the env variables like this:</p><pre><code class="shell">export WIFI&#95;SSID='\&quot;your ssid\&quot;'
+export WIFI&#95;SSID='\&quot;your pass\&quot;'
+pio run -e esp32c6
+</code></pre><p>And these can be accessed in code like so:</p><pre><code class="c">const char&#42; ssid = ESP32&#95;SSID;
+const char&#42; password = ESP32&#95;PASS;
+</code></pre><p>OK, this wasn't as easy as I remembered. 🤷🏼</p><h2><a name="stm32-bluepill"></a><a href="#stm32-bluepill">STM32 Bluepill</a></h2><p><div class="row"><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>STM32F103C8T6, ARM Cortex-M3, 32 bit</td></tr><tr><td>Clock</td><td>72 MHz</td></tr><tr><td>SRAM</td><td>20K</td></tr><tr><td>FLASH</td><td>64K</td></tr><tr><td>GPIO</td><td>32 I/O (some only 3V3-capable, PA13, PA14 and PA15 with reduced electrical capability)</td></tr><tr><td>Peripherals</td><td>2 <em> SPI, 2 </em> I2C, 2 <em> 10-channel 12-bit ADC, 3 </em> UART, CAN, USB 2.0, 4 timers, RTC</td></tr><tr><td>Power draw</td><td>0.15W</td></tr><tr><td>Other</td><td>External batery connection for RTC backup, JTAG debugger support</td></tr></tbody></table><p><div></div></p><p>The Bluepill was my go-to micro-controller module way back when Espressif didn't exist yet. It's got decent resources, communication via USB and convenient JTAG debugging with GDB support and single-stepping. All around very convenient platform with good support from the Arduino & PlatformIO side of things.</p><p>Supporting the RTC HAL requires an external battery socket (not pictured).</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/bluepill.jpg" alt="stm32" /></p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The setup was similar to the ESP32, less complex for sure:</p><pre><code class="ini">&#91;env:stm32&#93;
+platform = ststm32
+board = bluepill&#95;f103c8
+</code></pre><p>I tried flashing one of those USB-capable boot-loaders to make flashing easier, but that results in limited debuggability, as you don't immediately have the STLink hooked up to the board, so I reverted back to my "usual" ways. We do want to retain the UART via USB option, hence the need for the extra defines:</p><pre><code class="ini">&#91;env:stm32&#93;
+platform = ststm32
+board = bluepill&#95;f103c8
+upload&#95;protocol = stlink
+</code></pre><p>In order to support the RTC HAL routines we need to add an external dependency from ST, which somehow is not part of their Arduino port:</p><pre><code class="ini">&#91;env:stm32&#93;
+platform = ststm32
+board = bluepill&#95;f103c8
+upload&#95;protocol = stlink
+build&#95;flags =
+    -D HAS&#95;RTC
+    -D PIO&#95;FRAMEWORK&#95;ARDUINO&#95;ENABLE&#95;CDC
+    -D PIO&#95;FRAMEWORK&#95;ARDUINO&#95;USB&#95;HIGHSPEED&#95;FULL&#95;MODE
+    -D USBCON
+lib&#95;deps =
+    stm32duino/STM32duino RTC
+</code></pre><p>And that's it, we can compile the code with PlatformIO:</p><pre><code class="shell">pio run -e stm32
+</code></pre><h2><a name="arduino-uno"></a><a href="#arduino-uno">Arduino Uno</a></h2><p><div class="row"><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/uno.jpg" alt="uno" /></p><p></div><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>ATmega328p, AVR, 8bit</td></tr><tr><td>Clock</td><td>16 MHz</td></tr><tr><td>SRAM</td><td>2k</td></tr><tr><td>EEPROM</td><td>1k</td></tr><tr><td>FLASH</td><td>32k</td></tr><tr><td>GPIO</td><td>23</td></tr><tr><td>Peripherals</td><td>2 * SPI, I2C, UART, 8-channel 10-bit ADC, 3 timers (2 8-bit and one 16-bit), WDT</td></tr><tr><td>Other</td><td>On-board serial programmer/debugger based around another ATmega chip.</td></tr><tr><td>Power draw</td><td>0.15W</td></tr></tbody></table><p><div></div></p><p>An external I2C DS3231 RTC is supported for this board (not pictured). This required some pin swaps and along with the UART & the LEDs themselves exhausts all available GPIO pins, as the ATmega328p is a fairly limited chip.</p><p>I went with a knock-off Arduino board to match the color to proto-board I had. Also, I'm not very keen on supporting Arduino Inc to any extent.</p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The setup this time is actually simple. We just need an external library for the RTC and that's it:</p><pre><code class="ini">
+&#91;env:atmega&#93;
+platform = atmelavr
+board = uno
+build&#95;flags =
+    -D HAS&#95;RTC
+lib&#95;deps =
+    adafruit/RTCLib
+</code></pre><h2><a name="axiom-cme11a"></a><a href="#axiom-cme11a">Axiom CME11A</a></h2><p><div class="row"><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>MC68HC11A1FN, M68HC11, 8 bit</td></tr><tr><td>Clock</td><td>8 MHz</td></tr><tr><td>SRAM</td><td>8k (external), 512 internal</td></tr><tr><td>EEPROM</td><td>16k (external), 512 internal</td></tr><tr><td>GPIO</td><td>11 I/O (Port D, Port A), 11 input only (Port A, Port E)</td></tr><tr><td>Peripherals</td><td>UART (with RS232 port), SCI, SPI, 8-channel 8-bit ADC, 5 timers (16-bit, varying functions), WDT</td></tr><tr><td>Power draw</td><td>0.5W (9V input)</td></tr><tr><td>Other</td><td>Ports B and C are used for memory bus expansion, board supports up to 32k chips (any mix of EEPROM and SRAM), on-board ootloader and debugger (Bufalo 3.4, occupies 8k of EEPROM), LCD connector, SS keypad connector, expandable memory-mapped peripherals.</td></tr></tbody></table><p><div></div></p><p>This is where the issues started. This board, despite being really feature-full and driven by a once-well-supported platform is pretty much a nightmare to set up.</p><p>Most of the resources that I used to get this board going were found on the late <a href='https://github.com/tonypdmtr'>Tony Papadimitriou's GitHub</a>. It appears to me that Tony was the last person singlehandedly keeping the HC11 alive. RIP</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/cme11a.jpg" alt="cme11a" /></p><p></div></div></p><p>Once set up, though, the board packs quite a few features - it comes pre-flashed with the Buffalo Monitor which allows uploading <code>.s19</code> dumps directly to RAM, run them, disassemble, change the memory and most importantly - it allows single-step debugging of the code on the board with up to 4 breakpoints! That's 90'ties technology and it proves that Arduino was just timing, not even delivery nor software.</p><p>This board is, so far, the only one with no support for the RTC. The MC68HC11 does not come with an RTC, but thanks to the expanded bus mode, one could use an ICM7170-like chip with this board directly. That's possible, but not implemented yet.</p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>This board requires an m68hc11 toolchain. Fortunately GNU binutils & GNU GCC at one point supported this platform.  Unfortunately, that support seems to no longer be available in the upstream projects, having been removed at around GCC 3.4.6.</p><p>We can still fetch the old sources though, so how hard can this be? While we're at it, let's use GEL libc for this platform:</p><pre><code class="shell">wget https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.gz
+wget https://ftp.gnu.org/gnu/gcc/gcc-3.4.6/gcc-core-3.4.6.tar.gz
+
+# Get GEL from https://sourceforge.net/projects/gel/files/gel-hc1x/1.6.1/gel-hc1x-1.6.1.tar.gz/download
+</code></pre><p>The GCC sources need a patch:</p><ul><li>Patch <code>config.guess</code> by copying the one from binutils package.</li><li>Patch <code>intl/configure</code> at line 1151 to change <code>main&#40;&#41;{return&#40;0&#41;;}</code> to <code>int main&#40;&#41;{return&#40;0&#41;;}</code></li><li>Patch <code>libiberty/regex.c</code> replacing the bogus declarations of <code>char &#42;malloc&#40;&#41;;</code> and <code>char &#42;realloc&#40;&#41;;</code> at lines 132 and 133 with <code>#include &lt;stdlib.h&gt;</code></li><li>Patch <code>libiberty/md5.c</code> adding <code>#include &lt;string.h&gt;</code>.</li><li>Patch <code>libiberty/getcwd.c</code> replacing <code>extern char &#42;getwd&#40;&#41;;</code> on line 33 with <code>extern char &#42;getwd&#40;char&#42;&#41;;</code></li><li>Patch <code>libiberty/getpwd.c</code> replacing <code>extern char &#42;getwd&#40;&#41;;</code> on line 41 with <code>extern char &#42;getwd&#40;char&#42;&#41;;</code></li><li>Patch <code>libiberty/pex-unix.c</code> replacing <code>extern int execv&#40;&#41;;</code> on line 47 with <code>extern int execv&#40;const char&#42;, char &#42; const&#42;&#41;;</code></li><li>Patch <code>libiberty/pex-unix.c</code> replacing <code>extern int execvp&#40;&#41;;</code> on line 48 with <code>extern int execvp&#40;const char&#42;, char &#42; const&#42;&#41;;</code></li><li>Patch <code>libiberty/pex-unix.c</code> replacing <code>int &#40;&#42;func&#41;&#40;&#41;;</code> on line 59 with <code>int &#40;&#42;func&#41;&#40;const char&#42;, char &#42; const&#42;&#41;;</code></li><li>Patch <code>gcc/collect2.c</code> at line 1537 to add <code>&#40;S&#95;IRUSR|S&#95;IWUSR&#41;</code> as third parameter to open (required with the <code>O&#95;CREAT</code> flag, see here for the error you get without patching)</li><li>Patch <code>gcc/config/m68hc11/larith.asm</code> at line 97 to read <code>.space 2</code> instead of <code>.dc.w 1</code> (to reserve uninitialized space for the virtual regs)</li><li>Patch <code>gcc/cpplib.c</code> replacing <code>U&quot;#&quot;;</code> on line 194 with <code>&#40;const uchar&#42;&#41;U&quot;#&quot;</code></li><li>Patch <code>gcc/cpplib.c</code> replacing <code>U&quot;pragma dependency&quot;;</code> on line 659 with <code>&#40;const uchar&#42;&#41;U&quot;pragma dependency&quot;</code></li><li>Patch <code>gcc/cpplex.c</code> adding <code>&#40;const uchar&#42;&#41;</code> before every <code>U</code>-prefixed string on line 42</li><li>Patch <code>gcc/cpplex.c</code> adding <code>&#40;const uchar&#42;&#41;</code> before every <code>U</code>-prefixed string on line 42</li><li>Patch <code>gcc/cppmacro.c</code> adding <code>&#40;const uchar&#42;&#41;</code> before <code>U</code>-prefixed strings on lines 223 and 224</li><li>Patch <code>gcc/insn-output.c</code> adding  <code>extern int m68hc11&#95;is&#95;far&#95;symbol &#40;rtx&#41;;</code> at the top.</li><li>Patch <code>gcc/insn-output.c</code> adding  <code>extern int m68hc11&#95;is&#95;trap&#95;symbol &#40;rtx&#41;;</code> at the top.</li></ul><p>As a convenience, there is a patch file in the repo: <code>hc11/gcc.patch</code></p><p>The GEL sources also need patching:</p><ul><li>Changing the <code>m6811-elf-</code> binutils prefix to <code>m68hc11-elf-</code> where appropriate.</li><li>Removing any <code>.cc</code> files from the makefiles as C++ is not supported.</li></ul><p>As a convenience, there is a patch file in the repo: <code>hc11/gel.patch</code></p><p>Here's the full script to get a toolchain going:</p><pre><code>cd hc11
+mkdir -p build/bin
+export PATH=$PATH:`pwd`/build/bin
+
+# Binutils
+tar zxvf binutils-2.39.tar.gz
+mv binutils-2.39 binutils-m68hc11-elf-2.39
+cd binutils-m68hc11-elf-2.39
+./configure --prefix=`pwd`/../build --target=m68hc11-elf
+make
+make install
+
+cd ..
+
+# GCC
+tar zxvf gcc-core-3.4.6.tar.gz
+
+# Patch the sources!
+patch -s -p0 &lt; gcc.patch
+
+mv gcc-3.4.6 gcc-m68hc11-elf-3.4.6
+cd gcc-m68hc11-elf-3.4.6
+./configure --prefix=`pwd`/../build --target=m68hc11-elf
+make
+make install
+
+cd ..
+
+# GEL LibC
+tar zxvf gel-hc1x-1.6.1.tar.gz
+
+# Patch the sources!
+patch -s -p0 &lt; gel.patch
+
+cd gel-hc1x-1.6.1
+
+make TARGET&#95;BOARD=m68hc11-cme11
+
+cd ..
+mkdir -p build/lib
+mkdir -p build/include
+cp -r gel-hc1x-1.6.1/lib/&#42; build/lib
+cp -r gel-hc1x-1.6.1/include/&#42; build/include
+</code></pre><p>This will create all the necessary binaries in <code>hc11/build/bin</code> and libraries in <code>hc11/build/lib</code> and <code>hc11/build/include</code>. Building the project with the above in place is then a matter of:</p><pre><code>make cme11a-clean &amp;&amp; make cme11a
+truncate --size=8k firmware/cme11a.bin
+</code></pre><h3><a name="flashing-the-firmware"></a><a href="#flashing-the-firmware">Flashing the firmware</a></h3><p>The project can be uploaded to a CME11-type board via serial and <code>hc11/upload.py</code> script. You may need to upgrade the U5 RAM chip to 32k to fit the sketch, unless your board already came with that option.</p><p>Alternatively, you can update the memory map to point the <code>text</code> section to U6 EPROM space and burn it into a ROM chip. You will need to update the reset vector in Buffalo EPROM U7 to point to <code>0x8000</code> for the program to start automatically.</p><h3><a name="bootloader-mods"></a><a href="#bootloader-mods">Bootloader mods</a></h3><p>If you want to retain the interactive debugging boot-loader, a modified Buffalo monitor is provided in <code>hc11/buf341.asm</code>. In can be compiled with <code>asm11</code> and burned to the U7 ROM chip. It's not exactly the same as the version on the board, but the functionality is complete. The modification causes Buffalo to jump to <code>0x8000</code> when pin 0 of <code>PORTE</code> is high at boot.</p><p>A modified version of the original Axiom Buffalo 3.4AX ROM is available in <code>hc11/buf34ax.bin</code> and a modified version that allows running ROM code in <code>hc11/buf341ax.bin</code>. This was modified by hand using the <code>hc11/bufpatch.asm</code></p><p>The Buffalo Monitor <a href='https://github.com/tonypdmtr/buffalo'>sources come from this repository</a>.</p><h2><a name="temex-cpu-card"></a><a href="#temex-cpu-card">Temex CPU card</a></h2><p><div class="row"><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/temex.jpg" alt="temex" /></p><p></div><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>Z80, 8 bit</td></tr><tr><td>Clock</td><td>2.4576 MHz</td></tr><tr><td>SRAM</td><td>8k</td></tr><tr><td>EEPROM</td><td>8k</td></tr><tr><td>GPIO</td><td>16 I/O via Z80 PIO, 16 input only via memory mapped registers.</td></tr><tr><td>Peripherals</td><td>2 * UART (Z80 SIO), RTC (ICM7170IPG), 4 Timers (Z80 CTC), WDT (MAX691CPE).</td></tr><tr><td>Power draw</td><td>2.5W (9V input)</td></tr><tr><td>Other</td><td>SRAM & RTC battery backup (MAX691CPE), second EEPROM slot (max 8k).</td></tr></tbody></table><p><div></div></p><p>As far as I can tell this once was used as a serial to parallel adapter of some sorts - receiving commands via the UART and then, depending on the command, setting the parallel ports to some specific values and polling for data.</p><p></div></div></p><p>More on the card, <a href='https://github.com/Idorobots/temex-reverse'>including its reverse-engineering here</a>.</p><p>Some caveats with this board:</p><ul><li>Most of the chips on the board had to be replaced due to all kinds of weird failures - the original chips include the CPU, SIO, MAX691CPE and the misc 74XX logic.</li><li>The CPU reset line (from MAX691CPE) had a massive capacitor on it, causing erratic boot up behaviour. Had to be replaced with a smaller value.</li><li>Neither EEPROM nor RAM slots utilize the top two JEDEC-pinout address lines, meaning that no more than 8k of memory is addressable in each slot, despite the memory mapping allowing for 16k addresses. The board can be modified to support 32k ROM and 16 RAM (although, all slots need to be populated with 32k chips).</li><li>The RTC only worked during power-up, not supporting backup operation at all.</li></ul><h3><a name="rtc-mods"></a><a href="#rtc-mods">RTC mods</a></h3>There were multiple issues with the RTC circuit on this board:<ul><li>RTC/NVRAM battery was not present, not sure what type should be used.</li><li>RTC oscillator circuit is hooked up to the main 5V line, meaning that when there's no power, it does not oscillate. Very real time, much convenient.</li><li>RTC chip requires pull-ups on <code>RD</code> & <code>WR</code> lines during external backup. These were not present on the board preventing the chip from counting time during backup.</li></ul><p>The battery was the easy one - with a 32k crystal, the RTC chip (ICM7170) supports backup operation down to 1.8 Volts, so a run-of-the-mill CR2032 was a good choice.</p><p>The latter two issues were a bit of a head scratcher. It took a careful reading of the data-sheet to determine that the circuit on-board is ill-suited for power-down time keeping (which, honestly, defeats the purpose of having a backup battery hooked up to the chip in the first place). The circuit did not use the ICM7170 built-in power-down detector and instead supplied an external MAX691-based alternative instead. The caveat is that the oscillator circuit relied heavily on the 5V line to be present for operation, and on top of that the chip would not be put down to low-power mode, because the chip-select line was driven low during backup power operation.</p><p>To make matters worse, so were the read & write lines with the addresses and data lines floating, meaning that the chip could perform erroneous reads and writes with arbitrary data when on backup power.</p><p>All that resulted is the RTC not keeping its time during power-down and had to be addressed by a hardware mod:</p><p><div><div class="col-xs-7"></p><p>It's not pretty, but it works. First step was to cut the oscillator pull-ups to the 5V line and replace these with a wire going to the backup voltage.</p><p>Next, I added pull-ups for the <code>RD</code>, <code>WR</code> and <code>CS</code> lines. <code>CS</code> and <code>RD</code> were particularly power-hungry, so I had to go with 2.2k instead of the more appropriate 4.7k. Battery life will probably suffer.</p><p>Lastly, I took the pedantic option and added the 2k resistor between the backup power and the <code>V&#95;BACKUP</code> pin, as mandated by the data-sheet. While at it, I also added a bypass capacitor, though the placement of that leaves something to be desired...</p><p>I didn't bother pulling the data & address lines high as the chip is now properly disabled during power-down. As per the data-sheet, that can affect the battery life as some stray currents may still flow with the data lines floating.</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/temex-rtc-mod.jpg" alt="temex-rtc-mod" /></p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>This board requires SDCC & related binutils. Tested under the following version:</p><pre><code>SDCC : mcs51/z80/z180/r2k/r2ka/r3ka/sm83/tlcs90/ez80&#95;z80/z80n/r800/ds390/pic16/pic14/TININative/ds400/hc08/s08/stm8/pdk13/pdk14/pdk15/mos6502/mos65c02/f8 4.5.0 #15242 &#40;Linux&#41;
+</code></pre><p>SDCC has a very small built-in library available, but it's intentionally kept generic and small. As a generic Z80 libc does not seem to exist a lot of this code needed to be written from scratch for this board, <a href='https://github.com/Idorobots/advent-of-blinkenlights/tree/main/firmware/src/hal/temex'>including the C runtime bootstrap, interrupt vector tables handling and IO handling</a>. I thin this was my favorite part of this whole project, rarely do you ever get this close to the hardware anymore.</p><p>SDCC does not support C++ code, nor even files with a <code>.cpp</code> extension so some trickery was used in the Makefile:</p><pre><code class="make">main.rel: src/main.cpp
+	@cp $&#94; /tmp/main.c
+	$&#40;CC&#41; $&#40;CFLAGS&#41; -o $@ -c /tmp/main.c
+</code></pre><p>Yup, we just rename <code>main.cpp</code> and hope it works. It does, but that limits what language features we can use in C++. Building the project is now a mater of:</p><pre><code class="shell">make -f Makefile.z80
+</code></pre><p>Flash the ROM chip in EEPROM1 position.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/upduino-fpga-tutorial.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Upduino FPGA tutorial</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2021 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
