@@ -163,7 +163,26 @@ export WIFI&#95;SSID='\&quot;your pass\&quot;'
 pio run -e esp32c6
 </code></pre><p>And these can be accessed in code like so:</p><pre><code class="c">const char&#42; ssid = ESP32&#95;SSID;
 const char&#42; password = ESP32&#95;PASS;
-</code></pre><p>OK, this wasn't as easy as I remembered. 🤷🏼</p><h2><a name="stm32-bluepill"></a><a href="#stm32-bluepill">STM32 Bluepill</a></h2><p><div class="row"><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>STM32F103C8T6, ARM Cortex-M3, 32 bit</td></tr><tr><td>Clock</td><td>72 MHz</td></tr><tr><td>SRAM</td><td>20K</td></tr><tr><td>FLASH</td><td>64K</td></tr><tr><td>GPIO</td><td>32 I/O (some only 3V3-capable, PA13, PA14 and PA15 with reduced electrical capability)</td></tr><tr><td>Peripherals</td><td>2 <em> SPI, 2 </em> I2C, 2 <em> 10-channel 12-bit ADC, 3 </em> UART, CAN, USB 2.0, 4 timers, RTC</td></tr><tr><td>Power draw</td><td>0.15W</td></tr><tr><td>Other</td><td>External batery connection for RTC backup, JTAG debugger support</td></tr></tbody></table><p><div></div></p><p>The Bluepill was my go-to micro-controller module way back when Espressif didn't exist yet. It's got decent resources, communication via USB and convenient JTAG debugging with GDB support and single-stepping. All around very convenient platform with good support from the Arduino & PlatformIO side of things.</p><p>Supporting the RTC HAL requires an external battery socket (not pictured).</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/bluepill.jpg" alt="stm32" /></p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The setup was similar to the ESP32, less complex for sure:</p><pre><code class="ini">&#91;env:stm32&#93;
+</code></pre><p>OK, this wasn't as easy as I remembered. 🤷🏼</p><h3><a name="hal-implementation"></a><a href="#hal-implementation">HAL implementation</a></h3><p>For this platform, the most interesting part is the "RTC" support, or rather, the NTP support:</p><pre><code class="c">void initRTC&#40;void&#41; {
+  WiFi.mode&#40;WIFI&#95;STA&#41;;
+  WiFi.begin&#40;ssid, password&#41;;
+
+  // ...
+
+  configTime&#40;0, 0, &quot;time.nist.gov&quot;, &quot;0.pool.ntp.org&quot;, &quot;1.pool.ntp.org&quot;&#41;;
+}
+</code></pre><p>This connects the board to the local WiFi network and sets up several NTP servers kicking off time synchronization for a GMT offset of 0 and daylight savings offset of 0. Fetching the current local time is accomplished like this:</p><pre><code class="c">void getRTCTime&#40;struct tm &#42;time&#41; {
+  getLocalTime&#40;time&#41;;
+  time-&gt;tm&#95;year = time-&gt;tm&#95;year - 100;
+}
+</code></pre><p>The year provided this way is the increment from <code>1900</code>, so 126, but for the animation code to generically support the older platforms (that did not expect history to continue past the year 1999) we need to subtract the 100.</p><p>Since the time keeping is done by NTP, we don't support either setting time or toggling the RTC on or off.</p><pre><code class="c">void toggleRTC&#40;bool run&#41; {
+  // NOTE Nothing to do.
+}
+
+void setRTCTime&#40;struct tm &#42;time&#41; {
+  // NOTE Nothing to do, NTP handles time synchronization.
+}
+</code></pre><h2><a name="stm32-bluepill"></a><a href="#stm32-bluepill">STM32 Bluepill</a></h2><p><div class="row"><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>STM32F103C8T6, ARM Cortex-M3, 32 bit</td></tr><tr><td>Clock</td><td>72 MHz</td></tr><tr><td>SRAM</td><td>20K</td></tr><tr><td>FLASH</td><td>64K</td></tr><tr><td>GPIO</td><td>32 I/O (some only 3V3-capable, PA13, PA14 and PA15 with reduced electrical capability)</td></tr><tr><td>Peripherals</td><td>2 <em> SPI, 2 </em> I2C, 2 <em> 10-channel 12-bit ADC, 3 </em> UART, CAN, USB 2.0, 4 timers, RTC</td></tr><tr><td>Power draw</td><td>0.15W</td></tr><tr><td>Other</td><td>External batery connection for RTC backup, JTAG debugger support</td></tr></tbody></table><p><div></div></p><p>The Bluepill was my go-to micro-controller module way back when Espressif didn't exist yet. It's got decent resources, communication via USB and convenient JTAG debugging with GDB support and single-stepping. All around very convenient platform with good support from the Arduino & PlatformIO side of things.</p><p>Supporting the RTC HAL requires an external battery socket (not pictured).</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/bluepill.jpg" alt="stm32" /></p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The setup was similar to the ESP32, less complex for sure:</p><pre><code class="ini">&#91;env:stm32&#93;
 platform = ststm32
 board = bluepill&#95;f103c8
 </code></pre><p>I tried flashing one of those USB-capable boot-loaders to make flashing easier, but that results in limited debuggability, as you don't immediately have the STLink hooked up to the board, so I reverted back to my "usual" ways. We do want to retain the UART via USB option, hence the need for the extra defines:</p><pre><code class="ini">&#91;env:stm32&#93;
@@ -182,7 +201,35 @@ build&#95;flags =
 lib&#95;deps =
     stm32duino/STM32duino RTC
 </code></pre><p>And that's it, we can compile the code with PlatformIO:</p><pre><code class="shell">pio run -e stm32
-</code></pre><h2><a name="arduino-uno"></a><a href="#arduino-uno">Arduino Uno</a></h2><p><div class="row"><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/uno.jpg" alt="uno" /></p><p></div><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>ATmega328p, AVR, 8bit</td></tr><tr><td>Clock</td><td>16 MHz</td></tr><tr><td>SRAM</td><td>2k</td></tr><tr><td>EEPROM</td><td>1k</td></tr><tr><td>FLASH</td><td>32k</td></tr><tr><td>GPIO</td><td>23</td></tr><tr><td>Peripherals</td><td>2 * SPI, I2C, UART, 8-channel 10-bit ADC, 3 timers (2 8-bit and one 16-bit), WDT</td></tr><tr><td>Other</td><td>On-board serial programmer/debugger based around another ATmega chip.</td></tr><tr><td>Power draw</td><td>0.15W</td></tr></tbody></table><p><div></div></p><p>An external I2C DS3231 RTC is supported for this board (not pictured). This required some pin swaps and along with the UART & the LEDs themselves exhausts all available GPIO pins, as the ATmega328p is a fairly limited chip.</p><p>I went with a knock-off Arduino board to match the color to proto-board I had. Also, I'm not very keen on supporting Arduino Inc to any extent.</p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The setup this time is actually simple. We just need an external library for the RTC and that's it:</p><pre><code class="ini">
+</code></pre><h3><a name="hal-implementation"></a><a href="#hal-implementation">HAL implementation</a></h3><p>For this platform, again, the RTC setup is the most interesting part:</p><pre><code class="c">#include &lt;STM32RTC.h&gt;
+
+STM32RTC&amp; rtc = STM32RTC::getInstance&#40;&#41;;
+
+void initRTC&#40;void&#41; {
+  rtc.setClockSource&#40;STM32RTC::LSE&#95;CLOCK&#41;;
+  rtc.begin&#40;STM32RTC::HOUR&#95;24&#41;;
+}
+</code></pre><p>We're setting up the LSE clock (external 32k oscillator) and kick off the RTC, which, given that an external battery is connected to the <code>V&#95;BAT</code> pin, will allow the RTC to keep time even during power-off.</p><p>The RTC library that is available for this platform does not support POSIX-style functions, so we need to translate the data format to get a proper <code>struct tm</code> out of the RTC:</p><pre><code class="c">void setRTCTime&#40;struct tm &#42;time&#41; {
+  rtc.setDate&#40;time-&gt;tm&#95;wday, time-&gt;tm&#95;mday, time-&gt;tm&#95;mon, time-&gt;tm&#95;year&#41;;
+  rtc.setTime&#40;time-&gt;tm&#95;hour, time-&gt;tm&#95;min, time-&gt;tm&#95;sec&#41;;
+}
+
+void getRTCTime&#40;struct tm &#42;time&#41; {
+  uint8&#95;t wday, mday, mon, year, hour, min, sec;
+  uint32&#95;t subsec;
+
+  rtc.getDate&#40;&amp;wday, &amp;mday, &amp;mon, &amp;year&#41;;
+  rtc.getTime&#40;&amp;hour, &amp;min, &amp;sec, &amp;subsec&#41;;
+
+  time-&gt;tm&#95;wday = wday;
+  time-&gt;tm&#95;mday = mday;
+  time-&gt;tm&#95;mon = mon;
+  time-&gt;tm&#95;year = year;
+  time-&gt;tm&#95;hour = hour;
+  time-&gt;tm&#95;min = min;
+  time-&gt;tm&#95;sec = sec;
+}
+</code></pre><p>Even though this RTC supports sub-second resolution, we're ignoring it as it's not immediately useful.</p><h2><a name="arduino-uno"></a><a href="#arduino-uno">Arduino Uno</a></h2><p><div class="row"><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/uno.jpg" alt="uno" /></p><p></div><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>ATmega328p, AVR, 8bit</td></tr><tr><td>Clock</td><td>16 MHz</td></tr><tr><td>SRAM</td><td>2k</td></tr><tr><td>EEPROM</td><td>1k</td></tr><tr><td>FLASH</td><td>32k</td></tr><tr><td>GPIO</td><td>23</td></tr><tr><td>Peripherals</td><td>2 * SPI, I2C, UART, 8-channel 10-bit ADC, 3 timers (2 8-bit and one 16-bit), WDT</td></tr><tr><td>Other</td><td>On-board serial programmer/debugger based around another ATmega chip.</td></tr><tr><td>Power draw</td><td>0.15W</td></tr></tbody></table><p><div></div></p><p>An external I2C DS3231 RTC is supported for this board (not pictured). This required some pin swaps and along with the UART & the LEDs themselves exhausts all available GPIO pins, as the ATmega328p is a fairly limited chip.</p><p>I went with a knock-off Arduino board to match the color to proto-board I had. Also, I'm not very keen on supporting Arduino Inc to any extent.</p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>The setup this time is actually simple. We just need an external library for the RTC and that's it:</p><pre><code class="ini">
 &#91;env:atmega&#93;
 platform = atmelavr
 board = uno
@@ -190,7 +237,29 @@ build&#95;flags =
     -D HAS&#95;RTC
 lib&#95;deps =
     adafruit/RTCLib
-</code></pre><h2><a name="axiom-cme11a"></a><a href="#axiom-cme11a">Axiom CME11A</a></h2><p><div class="row"><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>MC68HC11A1FN, M68HC11, 8 bit</td></tr><tr><td>Clock</td><td>8 MHz</td></tr><tr><td>SRAM</td><td>8k (external), 512 internal</td></tr><tr><td>EEPROM</td><td>16k (external), 512 internal</td></tr><tr><td>GPIO</td><td>11 I/O (Port D, Port A), 11 input only (Port A, Port E)</td></tr><tr><td>Peripherals</td><td>UART (with RS232 port), SCI, SPI, 8-channel 8-bit ADC, 5 timers (16-bit, varying functions), WDT</td></tr><tr><td>Power draw</td><td>0.5W (9V input)</td></tr><tr><td>Other</td><td>Ports B and C are used for memory bus expansion, board supports up to 32k chips (any mix of EEPROM and SRAM), on-board ootloader and debugger (Bufalo 3.4, occupies 8k of EEPROM), LCD connector, SS keypad connector, expandable memory-mapped peripherals.</td></tr></tbody></table><p><div></div></p><p>This is where the issues started. This board, despite being really feature-full and driven by a once-well-supported platform is pretty much a nightmare to set up.</p><p>Most of the resources that I used to get this board going were found on the late <a href='https://github.com/tonypdmtr'>Tony Papadimitriou's GitHub</a>. It appears to me that Tony was the last person singlehandedly keeping the HC11 alive. RIP</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/cme11a.jpg" alt="cme11a" /></p><p></div></div></p><p>Once set up, though, the board packs quite a few features - it comes pre-flashed with the Buffalo Monitor which allows uploading <code>.s19</code> dumps directly to RAM, run them, disassemble, change the memory and most importantly - it allows single-step debugging of the code on the board with up to 4 breakpoints! That's 90'ties technology and it proves that Arduino was just timing, not even delivery nor software.</p><p>This board is, so far, the only one with no support for the RTC. The MC68HC11 does not come with an RTC, but thanks to the expanded bus mode, one could use an ICM7170-like chip with this board directly. That's possible, but not implemented yet.</p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>This board requires an m68hc11 toolchain. Fortunately GNU binutils & GNU GCC at one point supported this platform.  Unfortunately, that support seems to no longer be available in the upstream projects, having been removed at around GCC 3.4.6.</p><p>We can still fetch the old sources though, so how hard can this be? While we're at it, let's use GEL libc for this platform:</p><pre><code class="shell">wget https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.gz
+</code></pre><h3><a name="hal-implementation"></a><a href="#hal-implementation">HAL implementation</a></h3><p>Yet again, the RTC is the more interesting bit of the HAL. It's fairly similar to the STM32 version, except the RTC used is an external module, and a different library is driving it:</p><pre><code class="c">#include &lt;RTClib.h&gt;
+
+RTC&#95;DS3231 rtc;
+
+void initRTC&#40;void&#41; {
+  rtc.begin&#40;&#41;;
+}
+</code></pre><p>This library does not support POSIX-style data formats, so we need to translate:</p><pre><code class="c">void setRTCTime&#40;struct tm &#42;time&#41; {
+  rtc.adjust&#40;DateTime&#40;time-&gt;tm&#95;year, time-&gt;tm&#95;mon, time-&gt;tm&#95;mday, time-&gt;tm&#95;hour, time-&gt;tm&#95;min, time-&gt;tm&#95;sec&#41;&#41;;
+}
+
+void getRTCTime&#40;struct tm &#42;time&#41; {
+  DateTime now = rtc.now&#40;&#41;;
+
+  time-&gt;tm&#95;wday = now.dayOfTheWeek&#40;&#41;;
+  time-&gt;tm&#95;mday = now.day&#40;&#41;;
+  time-&gt;tm&#95;mon = now.month&#40;&#41;;
+  time-&gt;tm&#95;year = now.year&#40;&#41; - 2000;
+  time-&gt;tm&#95;hour = now.hour&#40;&#41;;
+  time-&gt;tm&#95;min = now.minute&#40;&#41;;
+  time-&gt;tm&#95;sec = now.second&#40;&#41;;
+}
+</code></pre><p>We're also making sure that the output is exactly the same as in the other platform's cases.</p><h2><a name="axiom-cme11a"></a><a href="#axiom-cme11a">Axiom CME11A</a></h2><p><div class="row"><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>MC68HC11A1FN, M68HC11, 8 bit</td></tr><tr><td>Clock</td><td>8 MHz</td></tr><tr><td>SRAM</td><td>8k (external), 512 internal</td></tr><tr><td>EEPROM</td><td>16k (external), 512 internal</td></tr><tr><td>GPIO</td><td>11 I/O (Port D, Port A), 11 input only (Port A, Port E)</td></tr><tr><td>Peripherals</td><td>UART (with RS232 port), SCI, SPI, 8-channel 8-bit ADC, 5 timers (16-bit, varying functions), WDT</td></tr><tr><td>Power draw</td><td>0.5W (9V input)</td></tr><tr><td>Other</td><td>Ports B and C are used for memory bus expansion, board supports up to 32k chips (any mix of EEPROM and SRAM), on-board ootloader and debugger (Bufalo 3.4, occupies 8k of EEPROM), LCD connector, SS keypad connector, expandable memory-mapped peripherals.</td></tr></tbody></table><p><div></div></p><p>This is where the issues started. This board, despite being really feature-full and driven by a once-well-supported platform is pretty much a nightmare to set up.</p><p>Most of the resources that I used to get this board going were found on the late <a href='https://github.com/tonypdmtr'>Tony Papadimitriou's GitHub</a>. It appears to me that Tony was the last person singlehandedly keeping the HC11 alive. RIP</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/cme11a.jpg" alt="cme11a" /></p><p></div></div></p><p>Once set up, though, the board packs quite a few features - it comes pre-flashed with the Buffalo Monitor which allows uploading <code>.s19</code> dumps directly to RAM, run them, disassemble, change the memory and most importantly - it allows single-step debugging of the code on the board with up to 4 breakpoints! That's 90'ties technology and it proves that Arduino was just timing, not even delivery nor software.</p><p>This board is, so far, the only one with no support for the RTC. The MC68HC11 does not come with an RTC, but thanks to the expanded bus mode, one could use an ICM7170-like chip with this board directly. That's possible, but not implemented yet.</p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>This board requires an m68hc11 toolchain. Fortunately GNU binutils & GNU GCC at one point supported this platform.  Unfortunately, that support seems to no longer be available in the upstream projects, having been removed at around GCC 3.4.6.</p><p>We can still fetch the old sources though, so how hard can this be? While we're at it, let's use GEL libc for this platform:</p><pre><code class="shell">wget https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.gz
 wget https://ftp.gnu.org/gnu/gcc/gcc-3.4.6/gcc-core-3.4.6.tar.gz
 
 # Get GEL from https://sourceforge.net/projects/gel/files/gel-hc1x/1.6.1/gel-hc1x-1.6.1.tar.gz/download
@@ -239,9 +308,425 @@ cp -r gel-hc1x-1.6.1/lib/&#42; build/lib
 cp -r gel-hc1x-1.6.1/include/&#42; build/include
 </code></pre><p>This will create all the necessary binaries in <code>hc11/build/bin</code> and libraries in <code>hc11/build/lib</code> and <code>hc11/build/include</code>. Building the project with the above in place is then a matter of:</p><pre><code>make cme11a-clean &amp;&amp; make cme11a
 truncate --size=8k firmware/cme11a.bin
-</code></pre><h3><a name="flashing-the-firmware"></a><a href="#flashing-the-firmware">Flashing the firmware</a></h3><p>The project can be uploaded to a CME11-type board via serial and <code>hc11/upload.py</code> script. You may need to upgrade the U5 RAM chip to 32k to fit the sketch, unless your board already came with that option.</p><p>Alternatively, you can update the memory map to point the <code>text</code> section to U6 EPROM space and burn it into a ROM chip. You will need to update the reset vector in Buffalo EPROM U7 to point to <code>0x8000</code> for the program to start automatically.</p><h3><a name="bootloader-mods"></a><a href="#bootloader-mods">Bootloader mods</a></h3><p>If you want to retain the interactive debugging boot-loader, a modified Buffalo monitor is provided in <code>hc11/buf341.asm</code>. In can be compiled with <code>asm11</code> and burned to the U7 ROM chip. It's not exactly the same as the version on the board, but the functionality is complete. The modification causes Buffalo to jump to <code>0x8000</code> when pin 0 of <code>PORTE</code> is high at boot.</p><p>A modified version of the original Axiom Buffalo 3.4AX ROM is available in <code>hc11/buf34ax.bin</code> and a modified version that allows running ROM code in <code>hc11/buf341ax.bin</code>. This was modified by hand using the <code>hc11/bufpatch.asm</code></p><p>The Buffalo Monitor <a href='https://github.com/tonypdmtr/buffalo'>sources come from this repository</a>.</p><h2><a name="temex-cpu-card"></a><a href="#temex-cpu-card">Temex CPU card</a></h2><p><div class="row"><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/temex.jpg" alt="temex" /></p><p></div><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>Z80, 8 bit</td></tr><tr><td>Clock</td><td>2.4576 MHz</td></tr><tr><td>SRAM</td><td>8k</td></tr><tr><td>EEPROM</td><td>8k</td></tr><tr><td>GPIO</td><td>16 I/O via Z80 PIO, 16 input only via memory mapped registers.</td></tr><tr><td>Peripherals</td><td>2 * UART (Z80 SIO), RTC (ICM7170IPG), 4 Timers (Z80 CTC), WDT (MAX691CPE).</td></tr><tr><td>Power draw</td><td>2.5W (9V input)</td></tr><tr><td>Other</td><td>SRAM & RTC battery backup (MAX691CPE), second EEPROM slot (max 8k).</td></tr></tbody></table><p><div></div></p><p>As far as I can tell this once was used as a serial to parallel adapter of some sorts - receiving commands via the UART and then, depending on the command, setting the parallel ports to some specific values and polling for data.</p><p></div></div></p><p>More on the card, <a href='https://github.com/Idorobots/temex-reverse'>including its reverse-engineering here</a>.</p><p>Some caveats with this board:</p><ul><li>Most of the chips on the board had to be replaced due to all kinds of weird failures - the original chips include the CPU, SIO, MAX691CPE and the misc 74XX logic.</li><li>The CPU reset line (from MAX691CPE) had a massive capacitor on it, causing erratic boot up behaviour. Had to be replaced with a smaller value.</li><li>Neither EEPROM nor RAM slots utilize the top two JEDEC-pinout address lines, meaning that no more than 8k of memory is addressable in each slot, despite the memory mapping allowing for 16k addresses. The board can be modified to support 32k ROM and 16 RAM (although, all slots need to be populated with 32k chips).</li><li>The RTC only worked during power-up, not supporting backup operation at all.</li></ul><h3><a name="rtc-mods"></a><a href="#rtc-mods">RTC mods</a></h3>There were multiple issues with the RTC circuit on this board:<ul><li>RTC/NVRAM battery was not present, not sure what type should be used.</li><li>RTC oscillator circuit is hooked up to the main 5V line, meaning that when there's no power, it does not oscillate. Very real time, much convenient.</li><li>RTC chip requires pull-ups on <code>RD</code> & <code>WR</code> lines during external backup. These were not present on the board preventing the chip from counting time during backup.</li></ul><p>The battery was the easy one - with a 32k crystal, the RTC chip (ICM7170) supports backup operation down to 1.8 Volts, so a run-of-the-mill CR2032 was a good choice.</p><p>The latter two issues were a bit of a head scratcher. It took a careful reading of the data-sheet to determine that the circuit on-board is ill-suited for power-down time keeping (which, honestly, defeats the purpose of having a backup battery hooked up to the chip in the first place). The circuit did not use the ICM7170 built-in power-down detector and instead supplied an external MAX691-based alternative instead. The caveat is that the oscillator circuit relied heavily on the 5V line to be present for operation, and on top of that the chip would not be put down to low-power mode, because the chip-select line was driven low during backup power operation.</p><p>To make matters worse, so were the read & write lines with the addresses and data lines floating, meaning that the chip could perform erroneous reads and writes with arbitrary data when on backup power.</p><p>All that resulted is the RTC not keeping its time during power-down and had to be addressed by a hardware mod:</p><p><div><div class="col-xs-7"></p><p>It's not pretty, but it works. First step was to cut the oscillator pull-ups to the 5V line and replace these with a wire going to the backup voltage.</p><p>Next, I added pull-ups for the <code>RD</code>, <code>WR</code> and <code>CS</code> lines. <code>CS</code> and <code>RD</code> were particularly power-hungry, so I had to go with 2.2k instead of the more appropriate 4.7k. Battery life will probably suffer.</p><p>Lastly, I took the pedantic option and added the 2k resistor between the backup power and the <code>V&#95;BACKUP</code> pin, as mandated by the data-sheet. While at it, I also added a bypass capacitor, though the placement of that leaves something to be desired...</p><p>I didn't bother pulling the data & address lines high as the chip is now properly disabled during power-down. As per the data-sheet, that can affect the battery life as some stray currents may still flow with the data lines floating.</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/temex-rtc-mod.jpg" alt="temex-rtc-mod" /></p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>This board requires SDCC & related binutils. Tested under the following version:</p><pre><code>SDCC : mcs51/z80/z180/r2k/r2ka/r3ka/sm83/tlcs90/ez80&#95;z80/z80n/r800/ds390/pic16/pic14/TININative/ds400/hc08/s08/stm8/pdk13/pdk14/pdk15/mos6502/mos65c02/f8 4.5.0 #15242 &#40;Linux&#41;
+</code></pre><h3><a name="flashing-the-firmware"></a><a href="#flashing-the-firmware">Flashing the firmware</a></h3><p>The project can be uploaded to a CME11-type board via serial and <code>hc11/upload.py</code> script. You may need to upgrade the U5 RAM chip to 32k to fit the sketch, unless your board already came with that option.</p><p>Alternatively, you can update the memory map to point the <code>text</code> section to U6 EPROM space and burn it into a ROM chip. You will need to update the reset vector in Buffalo EPROM U7 to point to <code>0x8000</code> for the program to start automatically.</p><h3><a name="bootloader-mods"></a><a href="#bootloader-mods">Bootloader mods</a></h3><p>If you want to retain the interactive debugging boot-loader, a modified Buffalo monitor is provided in <code>hc11/buf341.asm</code>. In can be compiled with <code>asm11</code> and burned to the U7 ROM chip. It's not exactly the same as the version on the board, but the functionality is complete. The modification causes Buffalo to jump to <code>0x8000</code> when pin 0 of <code>PORTE</code> is high at boot.</p><p>A modified version of the original Axiom Buffalo 3.4AX ROM is available in <code>hc11/buf34ax.bin</code> and a modified version that allows running ROM code in <code>hc11/buf341ax.bin</code>. This was modified by hand using the <code>hc11/bufpatch.asm</code></p><p>The Buffalo Monitor <a href='https://github.com/tonypdmtr/buffalo'>sources come from this repository</a>.</p><h3><a name="hal-implementation"></a><a href="#hal-implementation">HAL implementation</a></h3><p>This one was a lot more elaborate even though there's a <code>libC</code> available for this platform...</p><p>First of all, the MCU on this board does not expose enough GPIO pins to make the LED bar work, so an external register was added to the MCU bus under the address of <code>0xb580</code>.</p><pre><code class="c">#define PX0 0x40
+#define PX1 0x41
+#define PX2 0x42
+#define PX3 0x43
+#define PX4 0x44
+#define PX5 0x45
+#define PX6 0x46
+#define PX7 0x47
+
+#define PORTX &#40;&#40;uint8&#95;t&#42;&#41; 0xb580&#41;
+
+volatile uint8&#95;t PX&#95;VALUE = 0x00;
+
+void digitalWrite&#40;uint8&#95;t pin, uint8&#95;t value&#41; {
+  uint8&#95;t off = pin &amp; 0xf;
+  uint8&#95;t mask = 1 &lt;&lt; off;
+
+  // A and D ports handled here...
+
+  if &#40;pin &gt;= PX0 &amp;&amp; pin &lt;= PX7&#41; {
+    PX&#95;VALUE = &#40;value == LOW&#41; ? &#40;PX&#95;VALUE &amp; &#126;mask&#41; : &#40;PX&#95;VALUE | mask&#41;;
+    &#42;PORTX = PX&#95;VALUE;
+  }
+}
+</code></pre><p>Since it's just a memory location, we can just write to that location to get the LED bar to display the value. That register is, of course, write-only, so there's no way to set <code>pinMode</code> for any of those pins. Furthermore, it only supports whole-register writes, so we need to maintain the current value in-memory, so that we can change individual pin values without affecting the other pins of the register.</p><p>For the remaining LEDs in the LED bar a mix of port A and port D pins is used:</p><pre><code class="c">#define PA0 0x00
+#define PA1 0x01
+#define PA2 0x02
+#define PA3 0x03
+#define PA4 0x04
+#define PA5 0x05
+#define PA6 0x06
+#define PA7 0x07
+
+#define PD0 0x30
+#define PD1 0x31
+#define PD2 0x32
+#define PD3 0x33
+#define PD4 0x34
+#define PD5 0x35
+#define PD6 0x36
+#define PD7 0x37
+
+volatile uint8&#95;t PA&#95;VALUE = 0x00;
+volatile uint8&#95;t PD&#95;VALUE = 0x00;
+
+void digitalWrite&#40;uint8&#95;t pin, uint8&#95;t value&#41; {
+  uint8&#95;t off = pin &amp; 0xf;
+  uint8&#95;t mask = 1 &lt;&lt; off;
+
+  if &#40;pin &gt;= PA0 &amp;&amp; pin &lt;= PA7&#41; {
+    PA&#95;VALUE = &#40;value == LOW&#41; ? &#40;PA&#95;VALUE &amp; &#126;mask&#41; : &#40;PA&#95;VALUE | mask&#41;;
+    &#95;io&#95;ports&#91;M6811&#95;PORTA&#93; = PA&#95;VALUE;
+  } else if &#40;pin &gt;= PD2 &amp;&amp; pin &lt;= PD5&#41; {
+    PD&#95;VALUE = &#40;value == LOW&#41; ? &#40;PD&#95;VALUE &amp; &#126;mask&#41; : &#40;PD&#95;VALUE | mask&#41;;
+    PD&#95;UART = &#95;io&#95;ports&#91;M6811&#95;PORTD&#93; &amp; 0x03;
+    &#95;io&#95;ports&#91;M6811&#95;PORTD&#93; = PD&#95;UART | PD&#95;VALUE;
+  }
+
+  // Port X handle here ...
+}
+</code></pre><p>Here, similarly, we can only write whole-byte values to these ports, meaning we have to maintain the current value and update individual pins this way. Port D is especially tricky as it is also used for the UART communication - each time we perform a whole-byte write of the port, we first fetch the values of <code>PD0</code> and <code>PD1</code>, to make sure we don't change these mid-transfer. I'm pretty sure it's not the right way to do this, but I can't argue with the results (I didn't check if it actually works, so I'm not arguing here 🤷🏼). Lastly, only some of the pins in ports A and D are bi-directional, so <code>pinMode</code> needs to take that into account:</p><pre><code class="c">void pinMode&#40;uint8&#95;t pin, uint8&#95;t mode&#41; {
+  uint8&#95;t off = pin &amp; 0xf;
+  uint8&#95;t mask = 1 &lt;&lt; off;
+
+  if &#40;pin == PA7&#41; {
+    uint8&#95;t curr = &#95;io&#95;ports&#91;M6811&#95;PACTL&#93;;
+    &#95;io&#95;ports&#91;M6811&#95;PACTL&#93; = &#40;mode == OUTPUT&#41; ? &#40;curr | mask&#41; : &#40;curr &amp; &#126;mask&#41;;
+  }  else if &#40;pin &gt;= PD2 &amp;&amp; pin &lt;= PD5&#41; {
+    uint8&#95;t curr = &#95;io&#95;ports&#91;M6811&#95;DDRD&#93;;
+    &#95;io&#95;ports&#91;M6811&#95;DDRD&#93; = &#40;mode == OUTPUT&#41; ? &#40;curr | mask&#41; : &#40;curr &amp; &#126;mask&#41;;
+  }
+}
+</code></pre><p>Another interesting aspect of this HAL is the timer interrupt. We want to be able to count how many milliseconds have passed and do that accurately enough. That can be achieved, well, by using timer interrupts built into the MCU:</p><pre><code class="c">set&#95;interrupt&#95;handler&#40;RTI&#95;VECTOR, timer&#95;interrupt&#41;;
+timer&#95;initialize&#95;rate&#40;M6811&#95;TPR&#95;16&#41;;
+</code></pre><p>The above code sets a timer interrupt vector and sets the timer prescaler to a sane value that will allow us to count the timer ticks:</p><pre><code class="c">volatile uint64&#95;t &#95;&#95;currTicks = 0;
+
+void &#95;&#95;attribute&#95;&#95;&#40;&#40;interrupt&#41;&#41; timer&#95;interrupt &#40;void&#41; {
+  &#95;&#95;currTicks++;
+  timer&#95;acknowledge&#40;&#41;;
+}
+</code></pre><p>This generates a timer interrupt roughly every 4.096 milliseconds, so we can compute the current milliseconds since boot time as follows:</p><pre><code class="c">uint64&#95;t currMillis&#40;void&#41; {
+  lock&#40;&#41;;
+  uint64&#95;t v = &#95;&#95;currTicks;
+  unlock&#40;&#41;;
+
+  return v &#42; 4;
+}
+</code></pre><p>The issue becomes apparent after a few minutes - the clock drifts wildly since every 4 milliseconds we're discarding about 0.1 milliseconds of time that passed. That's annoying, but it can be made to work two ways:</p><pre><code class="c">// Option 1:
+return v &#42; 1000L / &#40;M6811&#95;CPU&#95;E&#95;CLOCK / TIMER&#95;DIV&#41;;
+
+// Option 2:
+return v &#42; 4; // ???
+</code></pre><p>Option 1 is to properly compute the number of milliseconds that have passed since our interrupt routine was called the last time, but that has a somewhat surprising side effect. The MCU on this board, the MC68HC11, does not have any hardware division logic, meaning that any division must be emulated in software. That's done under the hood for us by GCC, even for 64-bit numbers. That code, however, is truly massive - the division alone inflates the ROM binary by <strong>6 kilobytes</strong>, which is funny considering that we have about 8 kilobytes of space available for the entire firmware.</p><p>Option 2 is to remain using a simple conversion, but fudge the ticks count so that it works out in the end:</p><pre><code class="c">volatile uint64&#95;t &#95;&#95;currTicks = 0;
+volatile uint8&#95;t &#95;&#95;currTicksAdjust0 = 0;
+volatile uint8&#95;t &#95;&#95;currTicksAdjust1 = 0;
+
+void &#95;&#95;attribute&#95;&#95;&#40;&#40;interrupt&#41;&#41; timer&#95;interrupt &#40;void&#41; {
+  &#95;&#95;currTicks++;
+  &#95;&#95;currTicksAdjust0++;
+  &#95;&#95;currTicksAdjust1++;
+
+  if &#40;&#95;&#95;currTicksAdjust0 == 40&#41; {
+    &#95;&#95;currTicksAdjust0 = 0;
+    &#95;&#95;currTicks++;
+  }
+
+  if &#40;&#95;&#95;currTicksAdjust1 == 250&#41; {
+    &#95;&#95;currTicksAdjust1 = 0;
+    &#95;&#95;currTicks--;
+  }
+
+  timer&#95;acknowledge&#40;&#41;;
+}
+</code></pre><p>Here we increment the ticks counter as previously, but we also maintain two extra counters used for the count adjustments:</p><ul><li>Every 40 ticks we add an extra one (that's as if there were 4.1 milliseconds for each tick on average), but that creates an overshoot...</li><li>...so we decrement the counter every 250 ticks, so that on average each tick represents about 4.096 milliseconds.</li></ul><p>This way we can keep the time somewhat accurately without having to perform space-inefficient computations.</p><p>Lastly, since there is no Arduino framework present, we need to provide the main entry point:</p><pre><code class="c">int main&#40;void&#41; {
+  initSerial&#40;&#41;;
+  initTimer&#40;&#41;;
+
+  setup&#40;&#41;;
+
+  for&#40;;;&#41; {
+    loop&#40;&#41;;
+  }
+
+  return 0;
+}
+</code></pre><p>No surprises here, we initialize the serial & timers, then call the <code>setup&#40;&#41;</code> and <code>loop&#40;&#41;</code> functions. No more setup is needed as it's already performed by the Buffalo bootloader for us.</p><h2><a name="temex-cpu-card"></a><a href="#temex-cpu-card">Temex CPU card</a></h2><p><div class="row"><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/temex.jpg" alt="temex" /></p><p></div><div class="col-xs-7"></p><table><thead><tr><th></th><th></th></tr></thead><tbody><tr><td>Core</td><td>Z80, 8 bit</td></tr><tr><td>Clock</td><td>2.4576 MHz</td></tr><tr><td>SRAM</td><td>8k</td></tr><tr><td>EEPROM</td><td>8k</td></tr><tr><td>GPIO</td><td>16 I/O via Z80 PIO, 16 input only via memory mapped registers.</td></tr><tr><td>Peripherals</td><td>2 * UART (Z80 SIO), RTC (ICM7170IPG), 4 Timers (Z80 CTC), WDT (MAX691CPE).</td></tr><tr><td>Power draw</td><td>2.5W (9V input)</td></tr><tr><td>Other</td><td>SRAM & RTC battery backup (MAX691CPE), second EEPROM slot (max 8k).</td></tr></tbody></table><p><div></div></p><p>As far as I can tell this once was used as a serial to parallel adapter of some sorts - receiving commands via the UART and then, depending on the command, setting the parallel ports to some specific values and polling for data.</p><p></div></div></p><p>More on the card, <a href='https://github.com/Idorobots/temex-reverse'>including its reverse-engineering here</a>.</p><p>Some caveats with this board:</p><ul><li>Most of the chips on the board had to be replaced due to all kinds of weird failures - the original chips include the CPU, SIO, MAX691CPE and the misc 74XX logic.</li><li>The CPU reset line (from MAX691CPE) had a massive capacitor on it, causing erratic boot up behaviour. Had to be replaced with a smaller value.</li><li>Neither EEPROM nor RAM slots utilize the top two JEDEC-pinout address lines, meaning that no more than 8k of memory is addressable in each slot, despite the memory mapping allowing for 16k addresses. The board can be modified to support 32k ROM and 16 RAM (although, all slots need to be populated with 32k chips).</li><li>The RTC only worked during power-up, not supporting backup operation at all.</li></ul><h3><a name="rtc-mods"></a><a href="#rtc-mods">RTC mods</a></h3>There were multiple issues with the RTC circuit on this board:<ul><li>RTC/NVRAM battery was not present, not sure what type should be used.</li><li>RTC oscillator circuit is hooked up to the main 5V line, meaning that when there's no power, it does not oscillate. Very real time, much convenient.</li><li>RTC chip requires pull-ups on <code>RD</code> & <code>WR</code> lines during external backup. These were not present on the board preventing the chip from counting time during backup.</li></ul><p>The battery was the easy one - with a 32k crystal, the RTC chip (ICM7170) supports backup operation down to 1.8 Volts, so a run-of-the-mill CR2032 was a good choice.</p><p>The latter two issues were a bit of a head scratcher. It took a careful reading of the data-sheet to determine that the circuit on-board is ill-suited for power-down time keeping (which, honestly, defeats the purpose of having a backup battery hooked up to the chip in the first place). The circuit did not use the ICM7170 built-in power-down detector and instead supplied an external MAX691-based alternative instead. The caveat is that the oscillator circuit relied heavily on the 5V line to be present for operation, and on top of that the chip would not be put down to low-power mode, because the chip-select line was driven low during backup power operation.</p><p>To make matters worse, so were the read & write lines with the addresses and data lines floating, meaning that the chip could perform erroneous reads and writes with arbitrary data when on backup power.</p><p>All that resulted is the RTC not keeping its time during power-down and had to be addressed by a hardware mod:</p><p><div><div class="col-xs-7"></p><p>It's not pretty, but it works. First step was to cut the oscillator pull-ups to the 5V line and replace these with a wire going to the backup voltage.</p><p>Next, I added pull-ups for the <code>RD</code>, <code>WR</code> and <code>CS</code> lines. <code>CS</code> and <code>RD</code> were particularly power-hungry, so I had to go with 2.2k instead of the more appropriate 4.7k. Battery life will probably suffer.</p><p>Lastly, I took the pedantic option and added the 2k resistor between the backup power and the <code>V&#95;BACKUP</code> pin, as mandated by the data-sheet. While at it, I also added a bypass capacitor, though the placement of that leaves something to be desired...</p><p>I didn't bother pulling the data & address lines high as the chip is now properly disabled during power-down. As per the data-sheet, that can affect the battery life as some stray currents may still flow with the data lines floating.</p><p></div><div class="col-xs-5"></p><p><img src="https://blog.idorobots.org/media/advent-of-blinkenlights/temex-rtc-mod.jpg" alt="temex-rtc-mod" /></p><p></div></div></p><h3><a name="toolchain-setup"></a><a href="#toolchain-setup">Toolchain setup</a></h3><p>This board requires SDCC & related binutils. Tested under the following version:</p><pre><code>SDCC : mcs51/z80/z180/r2k/r2ka/r3ka/sm83/tlcs90/ez80&#95;z80/z80n/r800/ds390/pic16/pic14/TININative/ds400/hc08/s08/stm8/pdk13/pdk14/pdk15/mos6502/mos65c02/f8 4.5.0 #15242 &#40;Linux&#41;
 </code></pre><p>SDCC has a very small built-in library available, but it's intentionally kept generic and small. As a generic Z80 libc does not seem to exist a lot of this code needed to be written from scratch for this board, <a href='https://github.com/Idorobots/advent-of-blinkenlights/tree/main/firmware/src/hal/temex'>including the C runtime bootstrap, interrupt vector tables handling and IO handling</a>. I thin this was my favorite part of this whole project, rarely do you ever get this close to the hardware anymore.</p><p>SDCC does not support C++ code, nor even files with a <code>.cpp</code> extension so some trickery was used in the Makefile:</p><pre><code class="make">main.rel: src/main.cpp
 	@cp $&#94; /tmp/main.c
 	$&#40;CC&#41; $&#40;CFLAGS&#41; -o $@ -c /tmp/main.c
 </code></pre><p>Yup, we just rename <code>main.cpp</code> and hope it works. It does, but that limits what language features we can use in C++. Building the project is now a mater of:</p><pre><code class="shell">make -f Makefile.z80
-</code></pre><p>Flash the ROM chip in EEPROM1 position.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/upduino-fpga-tutorial.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Upduino FPGA tutorial</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2021 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
+</code></pre><p>Flash the ROM chip in EEPROM1 position.</p><h3><a name="hal-implementation"></a><a href="#hal-implementation">HAL implementation</a></h3><h4><a name="c-runtime"></a><a href="#c-runtime">C runtime</a></h4>This platform was the most elaborate so far. There's a very limited standard library available in SDCC, but there's quite literally zilch in it. Everything needed to be implemented from scratch for this specific setup, including the C runtime bootstrap:<pre><code class="asm">.module crt0
+
+;; Reset vector
+.org 0
+jp      init
+
+;; Init
+.org 0x70
+init:
+ld      sp, #0x8200               ;; Set up stack pointer
+call    &#95;&#95;&#95;sdcc&#95;external&#95;startup
+or      a, a
+call    Z, gsinit                 ;; Initialise global variables
+
+call    &#95;main
+halt
+</code></pre><p>The reset vector is set to jump to the <code>init</code> function that performs the C runtime initialization and then calls the user-defined <code>main&#40;&#41;</code> function. The other vectors are more interesting...</p><p>The Z80 processor supports several ways of triggering small sections of code stored at a few initial offsets in the ROM. Whenever the <code>NMI</code> pin of the processor is pulled low, it'll suspend execution of the current instruction and jump to the interrupt vector stored in memory at offset <code>0x66</code>. Similarly, when an interrupt <code>INT</code> pin is pulled low and the Z80 processor is in the interrupt mode 1, the processor will jump to the interrupt vector at offset <code>0x38</code>. Interrupts can also be triggered by specific <code>RST XXXX</code> instructions causing the execution to jump to a specific interrupt vector named by the instruction, including: <code>0x08</code>, <code>0x10</code>, <code>0x18</code>, ..., <code>0x38</code>.</p><p>This is somewhat inconvenient as these interrupt vectors are static - these need to be burned into the ROM and can't be change during runtime... Unless some trickery is in place:</p><pre><code class="asm">.org 0x08
+push hl
+ld   hl, &#40;#0x8000&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+.org 0x10
+push hl
+ld   hl, &#40;#0x8002&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+.org 0x18
+push hl
+ld   hl, &#40;#0x8004&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+.org 0x20
+push hl
+ld   hl, &#40;#0x8006&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+.org 0x28
+push hl
+ld   hl, &#40;#0x8008&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+.org 0x30
+push hl
+ld   hl, &#40;#0x800a&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+.org 0x38
+push hl
+ld   hl, &#40;#0x800c&#41;
+ex   &#40;sp&#41;, hl
+ret
+
+;; NMI reset vector
+.org 0x66
+push hl
+ld   hl, &#40;#0x8018&#41;
+ex   &#40;sp&#41;, hl
+ret
+</code></pre><p>The trickery here is that we're making the interrupt service routines present at the expected offsets to fudge up the stack return address to point to an interrupt vector table stored in RAM at address <code>0x8000</code> (start of RAM for this board). To achieve that, the <code>hl</code> register is first pushed to the stack. That's a 16-bit register, which is the same width as the native pointer type. Next, we load <code>hl</code> with the address of an entry stored in the RAM vector table and then perform an exchange of the value stored at the top of the stack with <code>hl</code>. This way what we end up with is an address of the actual interrupt service routine stored on the top of the stack and a set of registers exactly the same as when we started executing the interrupt handler. The only remaining thing to do is to somehow jump to the code pointed to by the top of the stack, that is, return to it. Note that the <code>ret</code> instruction is <strong>not</strong> the correct way to return from an interrupt. That should either be done by <code>reti</code> or <code>retn</code> (for non-maskable interrupts). This <code>ret</code> in the code is used as a jump and the interrupt service routine present at that location is expected to properly return.</p><p>This trick allows us to rebind the handlers in that interrupt vector table at runtime:</p><pre><code class="c">void isrTrap&#40;void&#41;  &#95;&#95;critical &#95;&#95;interrupt&#40;0&#41; {
+  &#95;&#95;asm&#95;&#95;&#40;&quot;halt&quot;&#41;;
+}
+
+void nmiTrap&#40;void&#41; &#95;&#95;critical &#95;&#95;interrupt {
+  &#95;&#95;asm&#95;&#95;&#40;&quot;halt&quot;&#41;;
+}
+
+void&#42; &#95;&#95;at&#40;0x8000&#41; RESET&#95;VECTORS&#91;13&#93; = {
+  isrTrap, // RST 8
+  isrTrap, // RST 10
+  isrTrap, // RST 18
+  isrTrap, // RST 20
+  isrTrap, // RST 28
+  isrTrap, // RST 30
+  isrTrap, // RST 38
+  &#40;void&#42;&#41; 0x00,
+  &#40;void&#42;&#41; 0x00,
+  &#40;void&#42;&#41; 0x00,
+  &#40;void&#42;&#41; 0x00,
+  &#40;void&#42;&#41; 0x00,
+  nmiTrap // RST 66
+};
+
+void setResetVector&#40;uint8&#95;t offset, void&#42; vector&#41; {
+  RESET&#95;VECTORS&#91;offset&gt;&gt;3&#93; = vector;
+}
+
+void &#42;getResetVector&#40;uint8&#95;t offset&#41; {
+  return RESET&#95;VECTORS&#91;offset&gt;&gt;3&#93;;
+}
+</code></pre><p>Now, whenever a reset condition or an non-maskable interrupt is triggered, the CPU will run those service routine stubs and jump to the actual interrupt service routines stored in the RAM table.</p><h4><a name="timers-_-time"></a><a href="#timers-_-time">Timers & time</a></h4><p>The board is using a Z80 CTC chip for all timer handling. The chip is mapped at offset <code>0x00</code> in the IO space:</p><pre><code class="c">&#95;&#95;sfr &#95;&#95;at&#40;0x00&#41; CTC&#95;C0;
+&#95;&#95;sfr &#95;&#95;at&#40;0x01&#41; CTC&#95;C1;
+&#95;&#95;sfr &#95;&#95;at&#40;0x02&#41; CTC&#95;C2;
+&#95;&#95;sfr &#95;&#95;at&#40;0x03&#41; CTC&#95;C3;
+</code></pre><p>The firmware is using CTC timer 3 for the main millisecond count. The input clock to this timer is the system clock of 2.4576 MHz, which is very convenient, since we can just divide that down by 16 (CTC prescaler) and then 154 (time constant) to obtain something close-enough to a millisecond. Then the interrupt handler for this timer becomes just:</p><pre><code class="c">volatile uint64&#95;t &#95;&#95;currMillis = 0;
+
+void ctcC3Timer&#40;void&#41; &#95;&#95;critical &#95;&#95;interrupt&#40;3&#41; {
+  &#95;&#95;currMillis++;
+}
+
+uint64&#95;t currMillis&#40;void&#41; {
+  // NOTE Needed for atomic access.
+  &#95;&#95;asm&#95;&#95;&#40;&quot;di&quot;&#41;;
+  uint64&#95;t value = &#95;&#95;currMillis;
+  &#95;&#95;asm&#95;&#95;&#40;&quot;ei&quot;&#41;;
+  return value;
+}
+</code></pre><p>The accuracy of this clock depends heavily on the accuracy of the crystal oscillator (which isn't high), so that's going to have some drift. Fortunately, the board comes with an RTC clock on-board:</p><pre><code class="c">&#95;&#95;sfr &#95;&#95;at&#40;0xc0&#41; RTC&#95;C&#95;HSEC;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc1&#41; RTC&#95;C&#95;H;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc2&#41; RTC&#95;C&#95;M;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc3&#41; RTC&#95;C&#95;S;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc4&#41; RTC&#95;C&#95;MO;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc5&#41; RTC&#95;C&#95;D;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc6&#41; RTC&#95;C&#95;Y;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc7&#41; RTC&#95;C&#95;DOW;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc8&#41; RTC&#95;R&#95;HSEC;
+&#95;&#95;sfr &#95;&#95;at&#40;0xc9&#41; RTC&#95;R&#95;H;
+&#95;&#95;sfr &#95;&#95;at&#40;0xca&#41; RTC&#95;R&#95;M;
+&#95;&#95;sfr &#95;&#95;at&#40;0xcb&#41; RTC&#95;R&#95;S;
+&#95;&#95;sfr &#95;&#95;at&#40;0xcc&#41; RTC&#95;R&#95;MO;
+&#95;&#95;sfr &#95;&#95;at&#40;0xcd&#41; RTC&#95;R&#95;D;
+&#95;&#95;sfr &#95;&#95;at&#40;0xce&#41; RTC&#95;R&#95;Y;
+&#95;&#95;sfr &#95;&#95;at&#40;0xcf&#41; RTC&#95;R&#95;DOW;
+&#95;&#95;sfr &#95;&#95;at&#40;0xd0&#41; RTC&#95;INT;
+&#95;&#95;sfr &#95;&#95;at&#40;0xd1&#41; RTC&#95;CTRL;
+</code></pre><p>This chip, the ICM7170 is mapped at offset <code>0xc0</code> of the IO space and is fairly straightforward to use (assuming the circuit it's a part of is properly terminating its signals, etc):</p><pre><code class="c">void initRTCInt&#40;&#41; {
+  RTC&#95;INT = 0x00;
+
+  uint8&#95;t curr = RTC&#95;CTRL;
+  RTC&#95;CTRL = curr &amp; &#126;0x10; // Disable interrupts.
+}
+
+void setRTCTime&#40;struct tm &#42;t&#41; {
+  RTC&#95;C&#95;HSEC = t-&gt;tm&#95;hundredth;
+  RTC&#95;C&#95;S = t-&gt;tm&#95;sec;
+  RTC&#95;C&#95;M = t-&gt;tm&#95;min;
+  RTC&#95;C&#95;H = t-&gt;tm&#95;hour;
+  RTC&#95;C&#95;D = t-&gt;tm&#95;mday;
+  RTC&#95;C&#95;MO = t-&gt;tm&#95;mon;
+  RTC&#95;C&#95;Y = t-&gt;tm&#95;year;
+  RTC&#95;C&#95;DOW = t-&gt;tm&#95;wday;
+}
+
+void getRTCTime&#40;struct tm &#42;t&#41; {
+  t-&gt;tm&#95;hundredth = RTC&#95;C&#95;HSEC;
+  t-&gt;tm&#95;sec = RTC&#95;C&#95;S;
+  t-&gt;tm&#95;min = RTC&#95;C&#95;M;
+  t-&gt;tm&#95;hour = RTC&#95;C&#95;H;
+  t-&gt;tm&#95;mday = RTC&#95;C&#95;D;
+  t-&gt;tm&#95;mon = RTC&#95;C&#95;MO;
+  t-&gt;tm&#95;year = RTC&#95;C&#95;Y;
+  t-&gt;tm&#95;wday = RTC&#95;C&#95;DOW;
+}
+</code></pre><p>The catch here is the fact that this chip does not support vectorized interrupts, meaning whenever in triggers the interrupt line, it does not present an interrupt offset on the data bus and instead it is the CPU's responsibility to poll the chip to check if it was responsible for the interrupt, and what exactly caused it. We're just ignoring interrupts here altogether and we'll be polling the chip for time data explicitly.</p><h4><a name="console-io"></a><a href="#console-io">Console IO</a></h4><p>The serial console is done with a Z80 SIO/0 chip mapped at offset <code>0x40</code> in the IO space:</p><pre><code class="c">&#95;&#95;sfr &#95;&#95;at&#40;0x40&#41; SIO&#95;DATA&#95;A;
+&#95;&#95;sfr &#95;&#95;at&#40;0x41&#41; SIO&#95;DATA&#95;B;
+&#95;&#95;sfr &#95;&#95;at&#40;0x42&#41; SIO&#95;CTRL&#95;A;
+&#95;&#95;sfr &#95;&#95;at&#40;0x43&#41; SIO&#95;CTRL&#95;B;
+</code></pre><p>There are two UARTs in total, but the firmware makes use of only one of these - the A side. The setup is a bit elaborate:</p><pre><code class="c">void enableARX&#40;void&#41; {
+  SIO&#95;CTRL&#95;A = 0x03; // Select WR3
+  SIO&#95;CTRL&#95;A = 0xc1; // RX 8 bit, auto enable off, RX on
+}
+
+void enableARTS&#40;void&#41; {
+  SIO&#95;CTRL&#95;A = 0x05; // Select WR5
+  SIO&#95;CTRL&#95;A = 0xea; // DTR on, break off, TX 8 bit, TX on, RTS on
+}
+
+void initSIO&#40;int8&#95;t interrupts&#41; {
+  SIO&#95;CTRL&#95;A = 0x30; // Error reset.
+  SIO&#95;CTRL&#95;A = 0x18; // Reset &amp; abort
+
+  SIO&#95;CTRL&#95;A = 0x04; // Select WR4
+  SIO&#95;CTRL&#95;A = 0x44; // CLK x16, 1 stop bit, no parity
+
+  enableARTS&#40;&#41;;
+
+  if&#40;interrupts == -1&#41; {
+    SIO&#95;CTRL&#95;A = 0x01; // Select WR1
+    SIO&#95;CTRL&#95;A = 0x00; // Disable interrupts
+  } else {
+    SIO&#95;CTRL&#95;B = 0x01; // Select WR1
+    SIO&#95;CTRL&#95;B = 0x04; // No interrupt in channel B, special RX condition affects vector
+
+    SIO&#95;CTRL&#95;B = 0x02; // Select WR2
+    SIO&#95;CTRL&#95;B = 0x00; // Set up the interrupt vector
+
+    SIO&#95;CTRL&#95;A = 0x01; // Select WR1
+    SIO&#95;CTRL&#95;A = 0x18; // Interrupt on all RX characters, buffer overrun is a special RX condition, parity is not
+  }
+
+  enableARX&#40;&#41;;
+}
+</code></pre><p>The <code>RX</code> and <code>TX</code> clocks are connected to the CTC timer outputs, so we set up the CTC first and then initialize the SIO assuming a stable clock. The setup enables vectored interrupts and configures the widely supported 8N1 at roughly 9600 baud.</p><p>To send something to the serial console:</p><pre><code class="c">void flushATX&#40;void&#41; {
+  bool flushed = false;
+
+  do {
+      SIO&#95;CTRL&#95;A = 0x01; // SELECT RR1
+      uint8&#95;t b = SIO&#95;CTRL&#95;A;
+
+      if &#40;b &amp; 0x01&#41; {
+        flushed = true;
+      }
+  } while &#40;!flushed&#41;;
+}
+
+int putchar&#40;int c&#41; {
+  SIO&#95;DATA&#95;A = c &amp; 0xff;
+  flushATX&#40;&#41;;
+  return 0;
+}
+
+void display&#40;const char&#42; s&#41; {
+  const char &#42;i = s;
+  while &#40;&#42;i != '\0'&#41; {
+    putchar&#40;&#42;i&#41;;
+    i++;
+  }
+}
+</code></pre><p>This isn't ideal, as it create a visible delay in the LED bar whenever a lengthier log is printed. A better way to handle the TX flushing would be to introduce double buffering and configure transmit interrupts.</p><h4><a name="gpio"></a><a href="#gpio">GPIO</a></h4><p>The GPIO is handled by the Z80 PIO, mapped at offset <code>0x80</code> in the IO space:</p><pre><code class="c">&#95;&#95;sfr &#95;&#95;at&#40;0x80&#41; PIO&#95;DATA&#95;A;
+&#95;&#95;sfr &#95;&#95;at&#40;0x81&#41; PIO&#95;DATA&#95;B;
+&#95;&#95;sfr &#95;&#95;at&#40;0x82&#41; PIO&#95;CTRL&#95;A;
+&#95;&#95;sfr &#95;&#95;at&#40;0x83&#41; PIO&#95;CTRL&#95;B;
+
+#define PORTA &#40;&#40;void &#42;&#41; 0x80&#41;
+#define PORTB &#40;&#40;void &#42;&#41; 0x81&#41;
+
+volatile uint8&#95;t PIO&#95;VALUE&#95;A = 0x00;
+volatile uint8&#95;t PIO&#95;VALUE&#95;B = 0x00;
+
+void writePort&#40;void&#42; port, uint8&#95;t value&#41; {
+  if &#40;port == PORTA&#41; {
+    PIO&#95;VALUE&#95;A = value;
+    PIO&#95;DATA&#95;A = value;
+  } else if &#40;port == PORTB&#41; {
+    PIO&#95;VALUE&#95;B = value;
+    PIO&#95;DATA&#95;B = value;
+  } else {
+    // Not supported.
+    &#95;&#95;asm&#95;&#95;&#40;&quot;rst 0x8&quot;&#41;;
+  }
+}
+
+uint8&#95;t readPort&#40;void&#42; port&#41; {
+  if &#40;port == PORTA&#41; {
+    return PIO&#95;DATA&#95;A;
+  } else if &#40;port == PORTB&#41; {
+    return PIO&#95;DATA&#95;B;
+  } else {
+    return &#42;&#40;&#40;uint8&#95;t&#42;&#41;port&#41;;
+  }
+}
+</code></pre><p>The PIO only supports whole-byte direction changes and writes, so we need to maintain the current values for both ports in memory. This also complicates the <code>pinMode</code> implementation slightly.</p><h4><a name="main"></a><a href="#main">Main</a></h4><p>Putting it all together into a main function:</p><pre><code class="c">int main&#40;void&#41; {
+  setInterruptVector&#40;0, ISR&#40;0&#41;&#41;;
+  // ...
+  setInterruptVector&#40;32, ISR&#40;32&#41;&#41;;
+
+  setInterruptVector&#40;0x16, ctcC3Timer&#41;;
+  setInterruptVector&#40;0x0c, sioARXByteAvailable&#41;;
+  setInterruptVector&#40;0x0e, sioARXByteCondition&#41;;
+
+  initCTC3&#40;154, 0x10&#41;; // Interrupt every 1 ms.
+  initSerial&#40;&#41;;
+  initPIOA&#40;PIO&#95;INPUT&#41;; // Input
+  initPIOB&#40;PIO&#95;INPUT&#41;; // Input
+  initPortsCD&#40;&#41;;
+  initRTCInt&#40;false, 0x00&#41;;
+
+  initInterrupts&#40;&#41;;
+
+  setup&#40;&#41;;
+
+  for&#40;;;&#41; {
+    loop&#40;&#41;;
+  }
+}
+</code></pre><p>There is quite a bit of setup here, starting with the interrupt vectors, the various peripheral devices and lastly, actually enabling the interrupts in z80 mode 2. Since the board technically supports non-volatile RAM, we can make use of that by returning a 0 value from the <code>&#95;&#95;sdcc&#95;external&#95;startup&#40;&#41;</code> function. We do need to verify that the setup was actually done at some previous point though:</p><pre><code class="c">unsigned char &#95;&#95;sdcc&#95;external&#95;startup&#40;void&#41; {
+  if &#40;getInterruptVector&#40;0x16&#41; == ctcC3Timer
+      &amp;&amp; getInterruptVector&#40;0x0c&#41; == sioARXByteAvailable
+      &amp;&amp; getInterruptVector&#40;0x0e&#41; == sioARXByteCondition&#41; {
+    // Setup is correct, skip initializing RAM.
+    return 1;
+  } else {
+    // Setup stuff that needs to be set up just once.
+    return 0;
+  }
+}
+</code></pre><p>The interrupt table is a pretty decent place to look for that verification - if the RAM kept its contents, then we expect to find specific function pointers at specific offsets of the RAM interrupt vector table. If that is the case, we can skip the global variable initialization (that would otherwise overwrite the interrupt table and the values stored in the other global variables).</p><p><strong>2026-01-06</strong>: Added more details on each platforms' HAL implementation.</p><footer><div class="row"><div class="hidden-xs col-md-2"></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"><li class="previous"><a href="../entries/upduino-fpga-tutorial.html"><i class="fa fa-chevron-left" style="margin-right: 5px;"></i><span class="entry-title">Upduino FPGA tutorial</span></a></li></ul></nav></div><div class="col-xs-6 col-md-4"><nav><ul class="pager"></ul></nav></div></div></footer></article><footer><hr /><div class="row"><div class="text-center"><div class="row"><div>Copyright © 2011-2021 Kajetan "Kajtek" Rzepecki</div><div>All writing licensed under <a href="http://creativecommons.org/licenses/by-sa/4.0/" rel="license">CC BY-SA 4.0</a>. All code released under the <a href="../media/LICENSE" rel="license">MIT license</a> unless otherwise specified.</div></div></div><div class="text-center"><p>Powered by <a href="https://github.com/Idorobots/lambda-blog">λ-blog</a>.</p></div></div></footer></div></article></div></body></html>
